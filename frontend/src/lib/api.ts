@@ -91,6 +91,61 @@ export class ApiError extends Error {
     super(`API Error ${status}: ${body}`);
     this.name = "ApiError";
   }
+
+  /**
+   * Probeer de response-body als JSON te parsen.
+   * Geeft `null` terug als de body geen geldig JSON is (bijv. HTML of plain text).
+   * Werkt defensief: gooit nooit een exception.
+   */
+  parseBody(): Record<string, unknown> | null {
+    if (!this.body || !this.body.trim()) return null;
+    try {
+      const parsed = JSON.parse(this.body);
+      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Haal een gebruiksvriendelijk foutbericht op uit de response body.
+   *
+   * Probeert het `detail`-veld uit de JSON te lezen (DRF-conventie).
+   * Valt terug op de opgegeven `fallback` als de body geen geldig JSON is,
+   * geen `detail` bevat, of leeg is.
+   *
+   * @param fallback - Terugvalmelding als geen `detail` gevonden wordt.
+   */
+  getDetail(fallback = "Er is een fout opgetreden."): string {
+    const parsed = this.parseBody();
+    if (parsed && typeof parsed["detail"] === "string" && parsed["detail"]) {
+      return parsed["detail"];
+    }
+    return fallback;
+  }
+
+  /**
+   * Haal veldvalidatiefouten op uit de response body (DRF-formaat).
+   * Geeft een dict terug van `{veldnaam: ["fout1", "fout2"]}`.
+   * Geeft een leeg object terug als er geen veldfouten zijn.
+   */
+  getFieldErrors(): Record<string, string[]> {
+    const parsed = this.parseBody();
+    if (!parsed) return {};
+    const errors: Record<string, string[]> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key === "detail") continue;
+      if (Array.isArray(value)) {
+        errors[key] = value.map(String);
+      } else if (typeof value === "string") {
+        errors[key] = [value];
+      }
+    }
+    return errors;
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

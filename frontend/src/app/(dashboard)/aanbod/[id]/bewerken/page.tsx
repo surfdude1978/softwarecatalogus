@@ -119,21 +119,16 @@ export default function BewerkPakketPage() {
       router.push("/aanbod");
     } catch (err) {
       if (err instanceof ApiError) {
-        try {
-          const body = JSON.parse(err.body);
-          const veldFouten: typeof fouten = {};
-          for (const [veld, berichten] of Object.entries(body)) {
-            if (Array.isArray(berichten)) {
-              veldFouten[veld as keyof PakketInput] = berichten.join(" ");
-            }
-          }
-          if (Object.keys(veldFouten).length > 0) {
-            setFouten(veldFouten);
-          } else {
-            setApiError(body.detail ?? "Er is een fout opgetreden bij het opslaan.");
-          }
-        } catch {
-          setApiError("Er is een onverwachte fout opgetreden.");
+        // Veldspecifieke fouten van de backend (safe JSON parse via getFieldErrors)
+        const fieldErrors = err.getFieldErrors();
+        const veldFouten: typeof fouten = {};
+        for (const [veld, berichten] of Object.entries(fieldErrors)) {
+          veldFouten[veld as keyof PakketInput] = berichten.join(" ");
+        }
+        if (Object.keys(veldFouten).length > 0) {
+          setFouten(veldFouten);
+        } else {
+          setApiError(err.getDetail("Er is een fout opgetreden bij het opslaan."));
         }
       } else {
         setApiError("Er is een onverwachte fout opgetreden.");

@@ -64,7 +64,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       return { totp_required: false };
     } catch (err) {
       const message = err instanceof ApiError
-        ? JSON.parse(err.body)?.detail || "Inloggen mislukt."
+        ? err.getDetail("Inloggen mislukt.")
         : "Er is een fout opgetreden.";
       set({ isLoading: false, error: message });
       throw err;

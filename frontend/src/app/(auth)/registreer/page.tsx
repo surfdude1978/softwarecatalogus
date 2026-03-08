@@ -46,13 +46,9 @@ export default function RegistreerPage() {
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiError) {
-        try {
-          const body = JSON.parse(err.body);
-          const messages = Object.values(body).flat().join(" ");
-          setError(messages || "Registratie mislukt.");
-        } catch {
-          setError("Registratie mislukt.");
-        }
+        const fieldErrors = err.getFieldErrors();
+        const fieldMessages = Object.values(fieldErrors).flat().join(" ");
+        setError(fieldMessages || err.getDetail("Registratie mislukt."));
       } else {
         setError("Er is een fout opgetreden.");
       }
