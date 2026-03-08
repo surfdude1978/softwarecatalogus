@@ -134,7 +134,8 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        # Vervangt IsAuthenticatedOrReadOnly: weigert totp_pending tokens bij schrijfacties.
+        "apps.api.permissions.IsFullyAuthenticatedOrReadOnly",
     ],
     "DEFAULT_METADATA_CLASS": None,
     "CSRF_EXEMPT_VIEWS": ["api.auth_views.LoginView", "api.auth_views.RegistratieView"],

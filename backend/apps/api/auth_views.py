@@ -10,6 +10,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from apps.gebruikers.models import User
 from apps.gebruikers.serializers import UserRegistratieSerializer, UserProfileSerializer
+from apps.api.permissions import IsFullyAuthenticated, IsTOTPPending
 
 
 class LoginView(APIView):
@@ -76,8 +77,11 @@ class LoginView(APIView):
 class VerifyTOTPView(APIView):
     """
     Stap 2 van login: TOTP code verificatie.
+
+    Accepteert uitsluitend een pre-2FA token (totp_pending=True).
+    Na succesvolle verificatie worden normale access/refresh tokens uitgegeven.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsTOTPPending]
 
     def post(self, request):
         totp_code = request.data.get("totp_code")
@@ -171,7 +175,7 @@ class WachtwoordResetRequestView(APIView):
 
 class TOTPSetupView(APIView):
     """2FA TOTP setup: genereer een nieuw TOTP device met QR code."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def post(self, request):
         user = request.user

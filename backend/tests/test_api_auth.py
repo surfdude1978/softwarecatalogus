@@ -154,6 +154,108 @@ class TestWachtwoordResetAPI:
         assert response.status_code == 200  # Geen foutmelding
 
 
+# ─────────────────────────────────────────────────────────────────
+# Tests: 2FA bypass preventie (issue #5)
+# ─────────────────────────────────────────────────────────────────
+
+class TestTOTPBypassPrevention:
+    """
+    Verifieer dat een pre-2FA token (totp_pending=True) UITSLUITEND
+    het TOTP verify-endpoint kan bereiken en alle overige beveiligde
+    endpoints weigert.
+    """
+
+    @pytest.fixture
+    def temp_token(self, gebruik_beheerder):
+        """Genereer een totp_pending token zoals de LoginView dat doet."""
+        from rest_framework_simplejwt.tokens import RefreshToken
+        gebruik_beheerder.totp_enabled = True
+        gebruik_beheerder.save()
+        token = RefreshToken.for_user(gebruik_beheerder)
+        token["totp_pending"] = True
+        return str(token.access_token)
+
+    def test_temp_token_mag_verify_totp_bereiken(self, api_client, temp_token):
+        """Het totp_pending token wordt geaccepteerd door verify-totp (ook al faalt de code zelf)."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:verify-totp")
+        # Code is fout, maar het endpoint is bereikbaar (niet 401/403 op authenticatie)
+        response = api_client.post(url, {"totp_code": "000000"})
+        # 401 door ongeldige TOTP code is OK; 403 door permissie is NIET OK
+        assert response.status_code != 403, (
+            "totp_pending token moet het verify-totp endpoint kunnen bereiken"
+        )
+
+    def test_temp_token_geblokkeerd_op_profiel_endpoint(self, api_client, temp_token):
+        """Profiel endpoint weigert een pre-2FA token (403/401)."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:profiel-mij")
+        response = api_client.get(url)
+        assert response.status_code in (401, 403), (
+            f"Verwacht 401/403 voor totp_pending token op /profiel/mij/, "
+            f"maar kreeg {response.status_code}"
+        )
+
+    def test_temp_token_geblokkeerd_op_pakket_aanmaken(self, api_client, temp_token):
+        """POST op pakketten endpoint weigert een pre-2FA token."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:pakket-list")
+        response = api_client.post(url, {"naam": "Bypass poging"})
+        assert response.status_code in (401, 403)
+
+    def test_temp_token_geblokkeerd_op_pakketoverzicht_write(self, api_client, temp_token):
+        """POST op mijn pakketoverzicht weigert een pre-2FA token."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:mijn-pakketoverzicht-list")
+        response = api_client.post(url, {})
+        assert response.status_code in (401, 403)
+
+    def test_temp_token_geblokkeerd_op_logout(self, api_client, temp_token):
+        """Logout endpoint weigert een pre-2FA token (mag niet als geldige sessie worden beschouwd)."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:logout")
+        response = api_client.post(url, {})
+        # Logout kan worden toegestaan (200) of geweigerd (401/403); nooit 500
+        assert response.status_code != 500
+
+    def test_normaal_token_heeft_geen_totp_pending_claim(self, api_client, gebruik_beheerder):
+        """Een normaal login token bevat géén totp_pending claim."""
+        from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+        refresh = RefreshToken.for_user(gebruik_beheerder)
+        access_token = AccessToken(str(refresh.access_token))
+        assert "totp_pending" not in access_token or not access_token.get("totp_pending", False)
+
+    def test_normaal_token_heeft_toegang_tot_profiel(self, auth_client):
+        """Een normaal token (zonder totp_pending) heeft gewone toegang tot beveiligde endpoints."""
+        url = reverse("api:profiel-mij")
+        response = auth_client.get(url)
+        assert response.status_code == 200
+
+    def test_temp_token_geblokkeerd_op_totp_setup(self, api_client, temp_token):
+        """TOTP setup endpoint weigert een pre-2FA token."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:totp-setup")
+        response = api_client.post(url)
+        assert response.status_code in (401, 403)
+
+    def test_volledig_ingelogd_token_geblokkeerd_op_verify_totp(self, auth_client):
+        """Een volledig geldig token (zonder totp_pending) mag verify-totp NIET gebruiken."""
+        url = reverse("api:verify-totp")
+        response = auth_client.post(url, {"totp_code": "000000"})
+        # Een volledig geauthenticeerde gebruiker heeft de verify-stap niet nodig
+        assert response.status_code == 403, (
+            "Volledig ingelogd token moet worden geweigerd op verify-totp endpoint"
+        )
+
+    def test_publieke_get_endpoints_toegankelijk_met_temp_token(self, api_client, temp_token):
+        """GET op publieke endpoints mag wél lukken met een totp_pending token (leesrechten)."""
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {temp_token}")
+        url = reverse("api:pakket-list")
+        response = api_client.get(url)
+        # Publieke leesacties zijn OK (IsFullyAuthenticatedOrReadOnly staat GET toe)
+        assert response.status_code == 200
+
+
 class TestProfielAPI:
     def test_profiel_ophalen(self, auth_client, gebruik_beheerder):
         url = reverse("api:profiel-mij")

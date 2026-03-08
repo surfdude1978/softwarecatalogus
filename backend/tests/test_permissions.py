@@ -7,6 +7,9 @@ from apps.api.permissions import (
     IsGebruikBeheerder,
     IsFunctioneelBeheerder,
     IsEigenOrganisatie,
+    IsFullyAuthenticated,
+    IsFullyAuthenticatedOrReadOnly,
+    IsTOTPPending,
 )
 from apps.gebruikers.models import User
 
@@ -14,10 +17,17 @@ from apps.gebruikers.models import User
 pytestmark = pytest.mark.django_db
 
 
-def _make_request(user, method="GET"):
+def _make_request(user, method="GET", totp_pending=False):
+    """
+    Maak een MagicMock request aan.
+
+    ``_totp_pending`` wordt expliciet ingesteld zodat MagicMock het attribuut
+    niet automatisch als een truthy MagicMock-object aanmaakt.
+    """
     request = MagicMock()
     request.user = user
     request.method = method
+    request._totp_pending = totp_pending  # Expliciet False om MagicMock-auto-attribuut te voorkomen
     return request
 
 
@@ -146,3 +156,97 @@ class TestIsEigenOrganisatie:
         perm = IsEigenOrganisatie()
         request = _make_request(functioneel_beheerder, "DELETE")
         assert perm.has_object_permission(request, None, pakket_gebruik) is True
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# Tests: 2FA-bewuste permissieklassen (issue #5)
+# ───────────────────────────────────────────────────────────────────────────
+
+class TestIsFullyAuthenticated:
+    def test_volledig_ingelogd_heeft_toegang(self, gebruik_beheerder):
+        perm = IsFullyAuthenticated()
+        request = _make_request(gebruik_beheerder, "GET")
+        assert perm.has_permission(request, None) is True
+
+    def test_totp_pending_token_geweigerd(self, gebruik_beheerder):
+        perm = IsFullyAuthenticated()
+        request = _make_request(gebruik_beheerder, "GET", totp_pending=True)
+        assert perm.has_permission(request, None) is False
+
+    def test_anoniem_geweigerd(self, db):
+        perm = IsFullyAuthenticated()
+        user = MagicMock()
+        user.is_authenticated = False
+        request = _make_request(user, "GET")
+        assert perm.has_permission(request, None) is False
+
+
+class TestIsFullyAuthenticatedOrReadOnly:
+    def test_get_anoniem_toegestaan(self, db):
+        perm = IsFullyAuthenticatedOrReadOnly()
+        user = MagicMock()
+        user.is_authenticated = False
+        request = _make_request(user, "GET")
+        assert perm.has_permission(request, None) is True
+
+    def test_get_met_totp_pending_toegestaan(self, gebruik_beheerder):
+        """Leesacties met totp_pending token zijn toegestaan (anoniem-equivalent)."""
+        perm = IsFullyAuthenticatedOrReadOnly()
+        request = _make_request(gebruik_beheerder, "GET", totp_pending=True)
+        assert perm.has_permission(request, None) is True
+
+    def test_post_met_totp_pending_geweigerd(self, gebruik_beheerder):
+        perm = IsFullyAuthenticatedOrReadOnly()
+        request = _make_request(gebruik_beheerder, "POST", totp_pending=True)
+        assert perm.has_permission(request, None) is False
+
+    def test_post_volledig_ingelogd_toegestaan(self, gebruik_beheerder):
+        perm = IsFullyAuthenticatedOrReadOnly()
+        request = _make_request(gebruik_beheerder, "POST")
+        assert perm.has_permission(request, None) is True
+
+    def test_post_anoniem_geweigerd(self, db):
+        perm = IsFullyAuthenticatedOrReadOnly()
+        user = MagicMock()
+        user.is_authenticated = False
+        request = _make_request(user, "POST")
+        assert perm.has_permission(request, None) is False
+
+
+class TestIsTOTPPending:
+    def test_totp_pending_token_heeft_toegang(self, gebruik_beheerder):
+        perm = IsTOTPPending()
+        request = _make_request(gebruik_beheerder, "POST", totp_pending=True)
+        assert perm.has_permission(request, None) is True
+
+    def test_volledig_ingelogd_geweigerd(self, gebruik_beheerder):
+        """Volledig ingelogde gebruiker mag verify-totp niet gebruiken."""
+        perm = IsTOTPPending()
+        request = _make_request(gebruik_beheerder, "POST", totp_pending=False)
+        assert perm.has_permission(request, None) is False
+
+    def test_anoniem_geweigerd(self, db):
+        perm = IsTOTPPending()
+        user = MagicMock()
+        user.is_authenticated = False
+        request = _make_request(user, "POST")
+        assert perm.has_permission(request, None) is False
+
+
+class TestTOTPPendingBlockingInCustomPermissions:
+    """Verifieer dat bestaande custom permissies ook totp_pending blokkeren."""
+
+    def test_aanbod_beheerder_safe_methods_geweigerd_met_totp_pending(self, gebruiker_publiek):
+        perm = IsAanbodBeheerder()
+        request = _make_request(gebruiker_publiek, "GET", totp_pending=True)
+        assert perm.has_permission(request, None) is False
+
+    def test_gebruik_beheerder_geweigerd_met_totp_pending(self, gebruik_beheerder):
+        perm = IsGebruikBeheerder()
+        request = _make_request(gebruik_beheerder, "GET", totp_pending=True)
+        assert perm.has_permission(request, None) is False
+
+    def test_functioneel_beheerder_geweigerd_met_totp_pending(self, functioneel_beheerder):
+        perm = IsFunctioneelBeheerder()
+        request = _make_request(functioneel_beheerder, "POST", totp_pending=True)
+        assert perm.has_permission(request, None) is False

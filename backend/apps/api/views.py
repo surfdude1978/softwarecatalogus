@@ -3,6 +3,7 @@ from django.db.models import Count, Q
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from apps.api.permissions import IsFullyAuthenticated  # noqa: E402 – na rest_framework imports
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -214,7 +215,7 @@ class GemeentePakketOverzichtViewSet(viewsets.ReadOnlyModelViewSet):
     Pakketoverzicht van een andere gemeente bekijken ('gluren bij de buren').
     """
     serializer_class = PakketGebruikSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         gemeente_id = self.kwargs.get("gemeente_id")
@@ -274,7 +275,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 class ProfielViewSet(viewsets.GenericViewSet):
     """Eigen gebruikersprofiel."""
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     @action(detail=False, methods=["get", "put", "patch"])
     def mij(self, request):
@@ -290,7 +291,7 @@ class ProfielViewSet(viewsets.GenericViewSet):
 class NotificatieViewSet(viewsets.ReadOnlyModelViewSet):
     """Notificaties voor de ingelogde gebruiker."""
     serializer_class = NotificatieSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         return Notificatie.objects.filter(user=self.request.user)
