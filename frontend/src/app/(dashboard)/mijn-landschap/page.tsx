@@ -51,7 +51,12 @@ export default function MijnLandschapPage() {
             Beheer de softwarepakketten van uw organisatie.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/mijn-landschap/architectuurkaart">
+            <Button variant="outline" size="sm">
+              🗺 Architectuurkaart
+            </Button>
+          </Link>
           <ExportKnoppen compact formaten={["xlsx", "csv", "ameff"]} />
           <Link href="/pakketten">
             <Button>Pakket toevoegen</Button>

@@ -28,6 +28,7 @@ from apps.architectuur.models import GemmaComponent
 from apps.architectuur.serializers import (
     GemmaComponentListSerializer,
     GemmaComponentDetailSerializer,
+    GemmaKaartComponentSerializer,
 )
 from apps.documenten.models import Document
 from apps.documenten.serializers import DocumentSerializer
@@ -162,6 +163,40 @@ class GemmaComponentViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "list":
             return GemmaComponentListSerializer
         return GemmaComponentDetailSerializer
+
+
+from rest_framework.views import APIView as _APIView  # noqa: E402
+
+
+class GemmaKaartView(_APIView):
+    """
+    GEMMA architectuurkaart — volledige componenthiërarchie met pakketten.
+
+    Geeft alle root-componenten terug (parent=null), met recursief geneste
+    kinderen (max 3 niveaus) en de bijbehorende pakketten per component.
+
+    Geauthenticeerde gebruikers zien hun eigen pakketgebruik per component.
+    Anonieme gebruikers zien maximaal 5 actieve pakketten per component.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        root_componenten = (
+            GemmaComponent.objects.filter(parent__isnull=True)
+            .prefetch_related(
+                "children",
+                "children__children",
+                "children__children__children",
+            )
+            .order_by("naam")
+        )
+        serializer = GemmaKaartComponentSerializer(
+            root_componenten,
+            many=True,
+            context={"request": request, "_niveau": 0},
+        )
+        return Response({"componenten": serializer.data})
 
 
 class NieuwsberichtViewSet(viewsets.ReadOnlyModelViewSet):

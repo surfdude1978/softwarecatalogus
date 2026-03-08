@@ -41,6 +41,8 @@ urlpatterns = [
     ),
     # Auth endpoints
     path("auth/", include("apps.api.auth_urls")),
+    # GEMMA architectuurkaart
+    path("gemma/kaart/", views.GemmaKaartView.as_view(), name="gemma-kaart"),
     # Zoeken (Meilisearch)
     path("zoek/", views_search.ZoekView.as_view(), name="zoek"),
     # Export endpoints
