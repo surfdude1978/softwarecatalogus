@@ -40,12 +40,19 @@ export interface Pakket {
 
 export interface PakketGebruik {
   id: string;
-  pakket: Pakket;
-  organisatie: Organisatie;
+  /** UUID van het gekoppelde Pakket */
+  pakket: string;
+  pakket_naam: string;
+  /** UUID van de Organisatie */
+  organisatie: string;
+  organisatie_naam: string;
   status: "in_gebruik" | "gepland" | "gestopt";
+  status_display: string;
   start_datum: string | null;
   eind_datum: string | null;
   notitie: string;
+  aangemaakt_op: string;
+  gewijzigd_op: string;
 }
 
 export interface Standaard {

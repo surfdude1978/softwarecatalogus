@@ -32,6 +32,7 @@ export default function MijnLandschapPage() {
   const { data, isLoading, error } = useMijnPakketOverzicht();
   const verwijderMutatie = useVerwijderPakketGebruik();
   const [verwijderConfirm, setVerwijderConfirm] = useState<string | null>(null);
+  const [verwijderFout, setVerwijderFout] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Strip "gemeente " prefix (hoofdletterongevoelig) voor betere TenderNed-match
@@ -46,8 +47,16 @@ export default function MijnLandschapPage() {
   const aanbestedingen = aanbestedingenData?.results ?? [];
 
   const handleVerwijder = async (id: string) => {
-    await verwijderMutatie.mutateAsync(id);
-    setVerwijderConfirm(null);
+    setVerwijderFout(null);
+    try {
+      await verwijderMutatie.mutateAsync(id);
+    } catch {
+      setVerwijderFout(
+        "Verwijderen mislukt. Het pakket bestaat mogelijk niet meer — de lijst is bijgewerkt."
+      );
+    } finally {
+      setVerwijderConfirm(null);
+    }
   };
 
   return (
@@ -71,6 +80,19 @@ export default function MijnLandschapPage() {
           </Link>
         </div>
       </div>
+
+      {verwijderFout && (
+        <div className="flex items-center justify-between rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <span>{verwijderFout}</span>
+          <button
+            onClick={() => setVerwijderFout(null)}
+            className="ml-4 text-red-500 hover:text-red-700"
+            aria-label="Sluit foutmelding"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12">

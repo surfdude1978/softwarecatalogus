@@ -50,5 +50,9 @@ export function useVerwijderPakketGebruik() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mijn-pakketoverzicht"] });
     },
+    onError: () => {
+      // Ververs de lijst bij een fout (bijv. 404 door verouderde cache)
+      queryClient.invalidateQueries({ queryKey: ["mijn-pakketoverzicht"] });
+    },
   });
 }
