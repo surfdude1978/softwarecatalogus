@@ -1,20 +1,37 @@
 /** @type {import('next').NextConfig} */
 
-// Content Security Policy voor productie (nl.internet.nl vereiste)
+const isDev = process.env.NODE_ENV === "development";
+
+// Content Security Policy — strenger in productie, ruimer in development.
+//
+// Productie (nl.internet.nl vereiste):
+//   • Geen unsafe-eval (verboden door OWASP/nl.internet.nl)
+//   • connect-src beperkt tot self + wss + https
+//   • upgrade-insecure-requests actief
+//
+// Development:
+//   • unsafe-eval: vereist door Next.js webpack HMR en React Fast Refresh
+//   • connect-src: sta ook http://localhost:8000 toe (directe backend-calls)
+//   • ws:: WebSocket hot-reload op elk localhost-port
+//   • Geen upgrade-insecure-requests (breekt http-dev-omgeving)
 const CSP = [
   "default-src 'self'",
-  // Next.js vereist unsafe-inline voor inline scripts (nonce-gebaseerde aanpak vereist extra middleware)
-  "script-src 'self' 'unsafe-inline'",
+  isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' wss: https:",
+  isDev
+    ? "connect-src 'self' ws: wss: http://localhost:8000 https:"
+    : "connect-src 'self' wss: https:",
   "media-src 'none'",
   "frame-src 'none'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  // upgrade-insecure-requests alleen in productie (HTTP→HTTPS)
+  ...(!isDev ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const securityHeaders = [
