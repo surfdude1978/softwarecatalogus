@@ -9,6 +9,7 @@ export type AanbestedingenStatus =
   | "gunning"
   | "rectificatie"
   | "vooraankondiging"
+  | "ef25"
   | "onbekend";
 
 export interface Aanbesteding {

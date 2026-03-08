@@ -12,6 +12,7 @@ const statusLabel: Record<string, string> = {
   gunning: "Gegund",
   rectificatie: "Rectificatie",
   vooraankondiging: "Vooraankondiging",
+  ef25: "Vrijwillig gegund",
   onbekend: "Onbekend",
 };
 
@@ -20,6 +21,7 @@ const statusKleur: Record<string, string> = {
   gunning: "bg-green-100 text-green-800",
   rectificatie: "bg-amber-100 text-amber-800",
   vooraankondiging: "bg-purple-100 text-purple-800",
+  ef25: "bg-teal-100 text-teal-800",
   onbekend: "bg-gray-100 text-gray-600",
 };
 

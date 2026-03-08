@@ -2,10 +2,14 @@
 TenderNed Open Data API client.
 
 Synchroniseert ICT-aanbestedingen van Nederlandse gemeenten vanuit TenderNed.
-Gebruikt de TenderNed Open Data REST API (JSON).
+Gebruikt de TenderNed papi REST API (JSON).
 
 API documentatie: https://www.tenderned.nl/cms/nl/aankondigingen-opendata
-Endpoint: https://www.tenderned.nl/aankondigingen/api/aankondigingen
+Endpoint: https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties
+  - Queryparameters: datumVanaf, aanbestedendeOverheidType=GEMEENTE, page, size
+  - Detail per item: GET /{publicatieId} voor CPV-codes en overige velden
+
+Ondersteunde publicatietypes incl. EF25 (vrijwillige ex-post-transparantie).
 """
 import logging
 from datetime import date, timedelta
@@ -265,14 +269,17 @@ DEMO_AANBESTEDINGEN = [
 
 class TenderNedClient:
     """
-    Client voor de TenderNed Open Data API.
+    Client voor de TenderNed papi Open Data API.
 
     Ondersteunt zowel live API-calls als demo-modus met voorbeelddata.
     In demo-modus worden de DEMO_AANBESTEDINGEN teruggegeven zodat
     de integratie werkt zonder netwerktoegang.
+
+    Productie-endpoint: https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties
+    Filter: aanbestedendeOverheidType=GEMEENTE, datumVanaf=YYYY-MM-DD
     """
 
-    BASE_URL = "https://www.tenderned.nl/aankondigingen/api/aankondigingen"
+    BASE_URL = "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties"
 
     def __init__(self, demo_mode: bool = False, base_url: Optional[str] = None):
         self.demo_mode = demo_mode or getattr(settings, "TENDERNED_DEMO_MODE", True)
@@ -301,7 +308,14 @@ class TenderNedClient:
         return self._haal_van_api(dagen_terug, max_resultaten)
 
     def _haal_van_api(self, dagen_terug: int, max_resultaten: int) -> list[dict]:
-        """Haal aanbestedingen op van de echte TenderNed API."""
+        """
+        Haal aanbestedingen op van de TenderNed papi REST API.
+
+        Gebruikt het /papi/tenderned-rs-tns/v2/publicaties endpoint met:
+        - aanbestedendeOverheidType=GEMEENTE (alleen gemeenten + puur-gemeentelijke GR's)
+        - datumVanaf=YYYY-MM-DD
+        - page en size voor paginatie
+        """
         resultaten = []
         pagina = 0
         pagina_grootte = 25
@@ -313,9 +327,10 @@ class TenderNedClient:
                 response = requests.get(
                     self.base_url,
                     params={
-                        "pageNumber": pagina,
-                        "resultaatPerPagina": pagina_grootte,
-                        "publicatieDatumVanaf": vanaf_datum,
+                        "page": pagina,
+                        "size": pagina_grootte,
+                        "datumVanaf": vanaf_datum,
+                        "aanbestedendeOverheidType": "GEMEENTE",
                     },
                     timeout=self.timeout,
                     headers={
@@ -330,24 +345,67 @@ class TenderNedClient:
                 logger.warning("TenderNed API fout op pagina %d: %s", pagina, exc)
                 break
 
-            aankondigingen = data.get("content") or data.get("aankondigingen") or []
+            # Papi-endpoint geeft content, _embedded of items terug
+            aankondigingen = (
+                data.get("content")
+                or data.get("_embedded", {}).get("publicaties", [])
+                or data.get("aankondigingen")
+                or data.get("items")
+                or []
+            )
             if not aankondigingen:
                 break
 
-            # Filter op ICT CPV-codes
+            # Strikt filteren op hoofd-CPV: 48* (software) of 72* (IT-diensten)
             for item in aankondigingen:
                 cpv_codes = self._extraheer_cpv_codes(item)
                 if self._is_ict_aanbesteding(cpv_codes):
                     resultaten.append(self._normaliseer(item, cpv_codes))
+                elif not cpv_codes:
+                    # Detail ophalen als lijst geen CPV-codes bevat
+                    publicatie_id = item.get("id") or item.get("publicatieId") or item.get("publicatiecode")
+                    if publicatie_id:
+                        item_met_detail = self._haal_detail(str(publicatie_id), item)
+                        cpv_codes = self._extraheer_cpv_codes(item_met_detail)
+                        if self._is_ict_aanbesteding(cpv_codes):
+                            resultaten.append(self._normaliseer(item_met_detail, cpv_codes))
 
             # Stoppen bij laatste pagina
-            totaal = data.get("totalElements") or data.get("totaalAantal") or 0
-            if (pagina + 1) * pagina_grootte >= totaal:
+            totaal = (
+                data.get("totalElements")
+                or data.get("totaalAantal")
+                or data.get("total")
+                or 0
+            )
+            laatste_pagina = data.get("last", False)
+            if laatste_pagina or (pagina + 1) * pagina_grootte >= totaal:
                 break
             pagina += 1
 
         logger.info("TenderNed: %d ICT-aanbestedingen opgehaald", len(resultaten))
         return resultaten[:max_resultaten]
+
+    def _haal_detail(self, publicatie_id: str, fallback: dict) -> dict:
+        """
+        Haal detail op voor één publicatie (incl. CPV-codes).
+
+        Gebruikt het /{publicatieId} detail-endpoint van de papi.
+        Geeft het oorspronkelijke item terug bij een fout.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/{publicatie_id}",
+                timeout=self.timeout,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "Softwarecatalogus-VNG/1.0",
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            logger.debug("Detail ophalen mislukt voor %s: %s", publicatie_id, exc)
+            return fallback
 
     def _extraheer_cpv_codes(self, item: dict) -> list[str]:
         """Extraheer CPV-codes uit een TenderNed aankondiging."""
@@ -451,18 +509,32 @@ class TenderNedClient:
         return "onbekend"
 
     def _map_status(self, item: dict) -> str:
-        """Map het aankondigingstype naar onze choices."""
+        """
+        Map het aankondigingstype naar onze Status-choices.
+
+        Ondersteunde types:
+        - EF25: vrijwillige ex-post-transparantiemelding (vrijwillige gunningsbekendmaking)
+        - Gunning: aankondiging van gegunde opdracht
+        - Rectificatie: correctie op eerdere aankondiging
+        - Vooraankondiging: prior information notice
+        - Aankondiging: standaard aankondiging van opdracht (default)
+        """
         status_str = str(
             item.get("typeAankondiging")
             or item.get("announcementType")
+            or item.get("publicatietype")
             or item.get("status")
             or ""
-        ).lower()
-        if "gunning" in status_str or "award" in status_str:
+        ).upper()
+
+        # EF25 = vrijwillige ex-post-transparantiemelding (TenderNed-specifiek)
+        if "EF25" in status_str or "VRIJWILLIGE" in status_str.upper():
+            return "ef25"
+        if "GUNNING" in status_str or "AWARD" in status_str or "GEGUND" in status_str:
             return "gunning"
-        if "rectificatie" in status_str or "corrigendum" in status_str:
+        if "RECTIFICATIE" in status_str or "CORRIGENDUM" in status_str:
             return "rectificatie"
-        if "vooraankondiging" in status_str or "prior" in status_str:
+        if "VOORAANKONDIGING" in status_str or "PRIOR" in status_str or "PIN" in status_str:
             return "vooraankondiging"
         return "aankondiging"
 

@@ -22,6 +22,7 @@ class Aanbesteding(BaseModel):
         GUNNING = "gunning", "Aankondiging van gegunde opdracht"
         RECTIFICATIE = "rectificatie", "Rectificatie"
         VOORAANKONDIGING = "vooraankondiging", "Vooraankondiging"
+        EF25 = "ef25", "EF25 - Vrijwillige ex-post-transparantie"
         ONBEKEND = "onbekend", "Onbekend"
 
     # ── TenderNed velden ───────────────────────────────────────────────────────

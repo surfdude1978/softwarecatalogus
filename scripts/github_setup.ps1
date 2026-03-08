@@ -1,13 +1,14 @@
 # ============================================================
 # GitHub Labels en Issues aanmaken voor Softwarecatalogus
 # ============================================================
-# Vereist: GitHub CLI (gh) geïnstalleerd en ingelogd
+# Vereist: GitHub CLI (gh) geinstalleerd en ingelogd
 # Installeren: winget install --id GitHub.cli
 # Inloggen:    gh auth login
 # Uitvoeren:   .\scripts\github_setup.ps1
 # ============================================================
 
 $REPO = "surfdude1978/softwarecatalogus"
+$TMPDIR = $env:TEMP
 
 Write-Host "=== GitHub Setup: Softwarecatalogus ===" -ForegroundColor Cyan
 Write-Host "Repository: $REPO" -ForegroundColor Gray
@@ -35,192 +36,80 @@ $labels = @(
 
 foreach ($label in $labels) {
     Write-Host "  Label: $($label.name)" -NoNewline
-    $result = gh label create $label.name `
-        --color $label.color `
-        --description $label.description `
-        --repo $REPO 2>&1
+    $out = gh label create $label.name --color $label.color --description $label.description --repo $REPO 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-Host " ✓" -ForegroundColor Green
+        Write-Host " OK" -ForegroundColor Green
     } else {
-        # Probeer te updaten als al bestaat
-        $result = gh label edit $label.name `
-            --color $label.color `
-            --description $label.description `
-            --repo $REPO 2>&1
+        $out2 = gh label edit $label.name --color $label.color --description $label.description --repo $REPO 2>&1
         Write-Host " (bijgewerkt)" -ForegroundColor Gray
     }
 }
 
 Write-Host ""
 
+# ── Hulpfunctie: issue aanmaken via tijdelijk bestand ──────
+
+function New-Issue {
+    param(
+        [string]$Title,
+        [string]$Body,
+        [string]$Labels
+    )
+    $tmpFile = Join-Path $TMPDIR "gh_issue_body.md"
+    [System.IO.File]::WriteAllText($tmpFile, $Body, [System.Text.Encoding]::UTF8)
+    Write-Host "  Issue: $($Title.Substring(0, [Math]::Min(70, $Title.Length)))..." -NoNewline
+    $out = gh issue create --title $Title --body-file $tmpFile --label $Labels --repo $REPO 2>&1
+    Remove-Item $tmpFile -ErrorAction SilentlyContinue
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host " OK" -ForegroundColor Green
+    } else {
+        Write-Host " FOUT: $out" -ForegroundColor Red
+    }
+}
+
 # ── Issues ─────────────────────────────────────────────────
 
 Write-Host "Issues aanmaken..." -ForegroundColor Yellow
 
-$issues = @(
-    @{
-        title = "[EIS] Audit logging — alle schrijfacties loggen"
-        body = @"
-## Beschrijving
-Alle mutaties (aanmaken, bijwerken, verwijderen) van pakketten, organisaties en gebruikers moeten worden gelogd voor traceerbaarheid en compliance.
+New-Issue `
+    -Title "[EIS] Audit logging - alle schrijfacties loggen" `
+    -Labels "eis,security,ready-for-claude" `
+    -Body "## Beschrijving`nAlle mutaties (aanmaken, bijwerken, verwijderen) moeten worden gelogd voor traceerbaarheid en compliance.`n`n## Acceptatiecriteria`n- [ ] AuditLog model aanmaken (actor, actie, object_type, object_id, tijdstip, IP-adres)`n- [ ] Mixin voor automatische logging op alle ModelViewSet acties`n- [ ] Leesbaar overzicht in Django Admin`n- [ ] Exporteerbaar als CSV door functioneel beheerder"
 
-## Acceptatiecriteria
-- [ ] AuditLog model aanmaken (actor, actie, object_type, object_id, tijdstip, IP-adres)
-- [ ] Django signal of mixin voor automatische logging op alle ModelViewSet acties
-- [ ] Leesbaar overzicht in Django Admin
-- [ ] Exporteerbaar als CSV door functioneel beheerder
+New-Issue `
+    -Title "[EIS] Export functionaliteit - CSV, Excel en AMEFF" `
+    -Labels "eis,enhancement,ready-for-claude" `
+    -Body "## Beschrijving`nGebruik-beheerders moeten hun pakketlandschap kunnen exporteren als CSV, Excel en AMEFF (ArchiMate Exchange).`n`n## Acceptatiecriteria`n- [ ] GET /api/v1/export/pakketoverzicht.csv`n- [ ] GET /api/v1/export/pakketoverzicht.xlsx`n- [ ] GET /api/v1/export/pakketoverzicht.ameff`n- [ ] Download-knop in mijn-landschap dashboard`n- [ ] Auth: alleen eigen landschap"
 
-## Labels
-eis, security, ready-for-claude
-"@
-        labels = "eis,security,ready-for-claude"
-    },
-    @{
-        title = "[EIS] Export functionaliteit — CSV, Excel en AMEFF"
-        body = @"
-## Beschrijving
-Gebruik-beheerders moeten hun pakketlandschap kunnen exporteren als CSV, Excel (.xlsx) en AMEFF (ArchiMate Exchange).
+New-Issue `
+    -Title "[EIS] WCAG 2.1 AA - toegankelijkheidsaudit en fixes" `
+    -Labels "eis,accessibility,ready-for-claude" `
+    -Body "## Beschrijving`nHet platform moet voldoen aan WCAG 2.1 AA (digitoegankelijk.nl standaard).`n`n## Acceptatiecriteria`n- [ ] axe-core of Lighthouse CI in CI/CD`n- [ ] Alle formulieren hebben correcte labels en foutmeldingen`n- [ ] Kleurcontrast minimaal 4.5:1 voor normale tekst`n- [ ] Toetsenbordnavigatie volledig functioneel`n- [ ] Skip-to-content link aanwezig`n- [ ] ARIA-attributen correct op alle interactieve elementen"
 
-## Acceptatiecriteria
-- [ ] `GET /api/v1/export/pakketoverzicht.csv` endpoint
-- [ ] `GET /api/v1/export/pakketoverzicht.xlsx` endpoint (openpyxl)
-- [ ] `GET /api/v1/export/pakketoverzicht.ameff` endpoint (XML/ArchiMate)
-- [ ] Download-knop in mijn-landschap dashboard
-- [ ] Auth: alleen eigen landschap (gebruik-beheerder)
+New-Issue `
+    -Title "[EIS] Test coverage minimaal 80% - backend unit en integratie tests" `
+    -Labels "eis,tests,ready-for-claude" `
+    -Body "## Beschrijving`nMinimaal 80% code coverage vereist voor productieomgeving.`n`n## Acceptatiecriteria`n- [ ] pytest-cov instellen in CI`n- [ ] Tests voor alle ViewSet acties (CRUD + permissies)`n- [ ] Tests voor TenderNed sync task (mock externe API)`n- [ ] Tests voor exportfunctionaliteit`n- [ ] Tests voor authenticatie (login, 2FA, token refresh)`n- [ ] Coverage report in CI/CD pipeline"
 
-## Labels
-eis, enhancement, ready-for-claude
-"@
-        labels = "eis,enhancement,ready-for-claude"
-    },
-    @{
-        title = "[EIS] WCAG 2.1 AA — toegankelijkheidsaudit en fixes"
-        body = @"
-## Beschrijving
-Het platform moet voldoen aan WCAG 2.1 AA (digitoegankelijk.nl standaard).
+New-Issue `
+    -Title "[EIS] GEMMA architectuurkaart - visuele weergave pakketlandschap" `
+    -Labels "eis,gemma,enhancement,ready-for-claude" `
+    -Body "## Beschrijving`nInteractieve weergave van GEMMA-referentiearchitectuur kaart met pakketten geplot op componenten.`n`n## Acceptatiecriteria`n- [ ] SVG-gebaseerde GEMMA kaart component`n- [ ] Pakketten geplot op bijbehorende GEMMA-component`n- [ ] Kleurcodering: in gebruik (groen) / gepland (oranje) / verouderd (grijs)`n- [ ] Zoom en pan functionaliteit`n- [ ] Klikken op pakket opent detailpagina`n- [ ] Export als PNG/PDF"
 
-## Acceptatiecriteria
-- [ ] axe-core of Lighthouse CI integreren in CI/CD
-- [ ] Alle formulieren hebben correcte labels en foutmeldingen
-- [ ] Kleurcontrast ≥ 4.5:1 voor normale tekst
-- [ ] Toetsenbordnavigatie volledig functioneel (geen toetsenbordvallen)
-- [ ] Skip-to-content link aanwezig
-- [ ] Focus management bij modale dialogen
-- [ ] ARIA-attributen correct op alle interactieve elementen
+New-Issue `
+    -Title "[EIS] Zelfregistratie organisaties - fiatteerstroom" `
+    -Labels "eis,enhancement,ready-for-claude" `
+    -Body "## Beschrijving`nLeveranciers en gemeenten moeten zichzelf kunnen registreren. Concept-status totdat functioneel beheerder fiatteert.`n`n## Acceptatiecriteria`n- [ ] Registratieformulier voor nieuwe organisatie en eerste gebruiker`n- [ ] E-mailbevestiging na registratie`n- [ ] Notificatie naar functioneel beheerder bij nieuwe concept-organisatie`n- [ ] Fiatteringspagina in beheer-dashboard`n- [ ] Na fiattering: welkomstmail en TOTP setup flow"
 
-## Labels
-eis,accessibility,ready-for-claude
-"@
-        labels = "eis,accessibility,ready-for-claude"
-    },
-    @{
-        title = "[EIS] Test coverage ≥ 80% — backend unit en integratie tests"
-        body = @"
-## Beschrijving
-Minimaal 80% code coverage vereist voor productieomgeving.
+New-Issue `
+    -Title "[WENS] TenderNed productie-modus - echte API koppeling" `
+    -Labels "wens,tenderned,ready-for-claude" `
+    -Body "## Beschrijving`nDe huidige TenderNed integratie gebruikt demo-data. Voor productie moet de echte TenderNed Open Data API worden aangekoppeld.`n`n## Acceptatiecriteria`n- [ ] TENDERNED_DEMO_MODE=False werkt in productie`n- [ ] Foutafhandeling bij API-uitval (retry, graceful degradation)`n- [ ] Rate limiting respecteren`n- [ ] Monitoring: alert bij mislukte dagelijkse sync"
 
-## Acceptatiecriteria
-- [ ] pytest-cov instellen in CI
-- [ ] Tests voor alle ViewSet acties (CRUD + permissies)
-- [ ] Tests voor TenderNed sync task (mock externe API)
-- [ ] Tests voor exportfunctionaliteit
-- [ ] Tests voor authenticatie (login, 2FA, token refresh)
-- [ ] Coverage report in CI/CD pipeline
-
-## Labels
-eis,tests,ready-for-claude
-"@
-        labels = "eis,tests,ready-for-claude"
-    },
-    @{
-        title = "[EIS] GEMMA architectuurkaart — visuele weergave pakketlandschap"
-        body = @"
-## Beschrijving
-Interactieve weergave van GEMMA-referentiearchitectuur kaart met pakketten geplot op componenten.
-
-## Acceptatiecriteria
-- [ ] SVG-gebaseerde GEMMA kaart component
-- [ ] Pakketten geplot op bijbehorende GEMMA-component
-- [ ] Kleurcodering: in gebruik (groen) / gepland (oranje) / verouderd (grijs)
-- [ ] Zoom en pan functionaliteit
-- [ ] Klikken op pakket → detailpagina
-- [ ] Export als PNG/PDF
-
-## Labels
-eis,gemma,enhancement,ready-for-claude
-"@
-        labels = "eis,gemma,enhancement,ready-for-claude"
-    },
-    @{
-        title = "[EIS] Zelfregistratie organisaties — fiatteerstroom"
-        body = @"
-## Beschrijving
-Leveranciers en gemeenten moeten zichzelf kunnen registreren. De registratie heeft concept-status totdat een functioneel beheerder fiatteert.
-
-## Acceptatiecriteria
-- [ ] Registratieformulier voor nieuwe organisatie + eerste gebruiker
-- [ ] E-mailbevestiging na registratie
-- [ ] Functioneel beheerder ontvangt notificatie bij nieuwe concept-organisatie
-- [ ] Fiatteringspagina in beheer-dashboard
-- [ ] Na fiattering: welkomstmail + TOTP setup flow
-
-## Labels
-eis,enhancement,ready-for-claude
-"@
-        labels = "eis,enhancement,ready-for-claude"
-    },
-    @{
-        title = "[WENS] TenderNed productie-modus — echte API koppeling"
-        body = @"
-## Beschrijving
-De huidige TenderNed integratie gebruikt demo-data. Voor productie moet de echte TenderNed Open Data API worden aangekoppeld.
-
-## Acceptatiecriteria
-- [ ] `TENDERNED_DEMO_MODE=False` werkt in productie
-- [ ] Echte TenderNed API URL geconfigureerd
-- [ ] Foutafhandeling bij API-uitval (retry, graceful degradation)
-- [ ] Rate limiting respecteren (TenderNed API-limieten)
-- [ ] Monitoring: alert bij mislukte dagelijkse sync
-
-## Labels
-wens,tenderned,ready-for-claude
-"@
-        labels = "wens,tenderned,ready-for-claude"
-    },
-    @{
-        title = "[WENS] nl.internet.nl 100% score — security headers productie"
-        body = @"
-## Beschrijving
-Het platform moet 100% scoren op nl.internet.nl voor HTTPS/TLS, DNSSEC, DKIM+DMARC, IPv6 en beveiligingsheaders.
-
-## Acceptatiecriteria
-- [ ] HSTS header (Strict-Transport-Security)
-- [ ] Content Security Policy (CSP) headers
-- [ ] DNSSEC geconfigureerd op domein
-- [ ] DKIM + DMARC voor e-mail
-- [ ] IPv6 ondersteuning
-- [ ] TLS 1.3 minimum
-
-## Labels
-wens,security,ready-for-claude
-"@
-        labels = "wens,security,ready-for-claude"
-    }
-)
-
-foreach ($issue in $issues) {
-    Write-Host "  Issue: $($issue.title.Substring(0, [Math]::Min(60, $issue.title.Length)))..." -NoNewline
-    $result = gh issue create `
-        --title $issue.title `
-        --body $issue.body `
-        --label $issue.labels `
-        --repo $REPO 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host " ✓" -ForegroundColor Green
-    } else {
-        Write-Host " ✗ ($result)" -ForegroundColor Red
-    }
-}
+New-Issue `
+    -Title "[WENS] nl.internet.nl 100% score - security headers productie" `
+    -Labels "wens,security,ready-for-claude" `
+    -Body "## Beschrijving`nHet platform moet 100% scoren op nl.internet.nl voor HTTPS/TLS, DNSSEC, DKIM+DMARC, IPv6 en beveiligingsheaders.`n`n## Acceptatiecriteria`n- [ ] HSTS header (Strict-Transport-Security)`n- [ ] Content Security Policy (CSP) headers`n- [ ] DNSSEC geconfigureerd op domein`n- [ ] DKIM + DMARC voor e-mail`n- [ ] IPv6 ondersteuning`n- [ ] TLS 1.3 minimum"
 
 Write-Host ""
 Write-Host "=== Klaar! ===" -ForegroundColor Green
