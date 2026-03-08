@@ -24,7 +24,7 @@ from apps.pakketten.serializers import (
 )
 from apps.standaarden.models import Standaard
 from apps.standaarden.serializers import StandaardSerializer
-from apps.architectuur.models import GemmaComponent
+from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
 from apps.architectuur.serializers import (
     GemmaComponentListSerializer,
     GemmaComponentDetailSerializer,
@@ -94,7 +94,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
         return PakketDetailSerializer
 
     def get_permissions(self):
-        if self.action in ["create", "update", "partial_update", "destroy"]:
+        if self.action in ["create", "update", "partial_update", "destroy", "stel_gemma_in"]:
             return [IsAanbodBeheerder()]
         return [AllowAny()]
 
@@ -105,6 +105,52 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if not self.request.user.is_authenticated or self.request.user.rol == "publiek":
             qs = qs.filter(status="actief")
         return qs
+
+    @action(detail=True, methods=["get", "put"], url_path="gemma-componenten", url_name="gemma-componenten")
+    def stel_gemma_in(self, request, pk=None):
+        """
+        GET  — huidige GEMMA-componentkoppelingen ophalen.
+        PUT  — GEMMA-componentkoppelingen vervangen (volledige lijst meesturen).
+
+        Verwacht bij PUT: { "gemma_component_ids": ["uuid1", "uuid2", ...] }
+        """
+        pakket = self.get_object()
+
+        if request.method == "GET":
+            componenten = pakket.gemma_componenten.all()
+            return Response({
+                "gemma_component_ids": [str(c.id) for c in componenten],
+                "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
+            })
+
+        # PUT — vervang alle koppelingen
+        component_ids = request.data.get("gemma_component_ids", [])
+        if not isinstance(component_ids, list):
+            return Response(
+                {"detail": "gemma_component_ids moet een lijst zijn."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Valideer dat alle opgegeven IDs bestaan
+        componenten = GemmaComponent.objects.filter(id__in=component_ids)
+        if len(component_ids) > 0 and componenten.count() != len(component_ids):
+            return Response(
+                {"detail": "Een of meer GEMMA-component IDs zijn ongeldig."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Vervang alle bestaande koppelingen atomair
+        PakketGemmaComponent.objects.filter(pakket=pakket).delete()
+        if componenten:
+            PakketGemmaComponent.objects.bulk_create([
+                PakketGemmaComponent(pakket=pakket, gemma_component=c)
+                for c in componenten
+            ])
+
+        return Response({
+            "gemma_component_ids": [str(c.id) for c in componenten],
+            "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
+        })
 
 
 class OrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
@@ -154,6 +200,7 @@ class GemmaComponentViewSet(viewsets.ReadOnlyModelViewSet):
     """GEMMA referentiecomponenten."""
     queryset = GemmaComponent.objects.all()
     permission_classes = [AllowAny]
+    pagination_class = None  # Klein, stabiel dataset — geen paginering nodig
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = {"type": ["exact"], "parent": ["exact", "isnull"]}
     search_fields = ["naam", "archimate_id"]

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import type { Pakket, PakketInput, PaginatedResponse } from "@/types";
+import type { GemmaComponent, Pakket, PakketInput, PaginatedResponse } from "@/types";
 
 /**
  * Haalt de eigen pakketten van de ingelogde leverancier op.
@@ -70,6 +70,42 @@ export function useBijwerkPakket(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
       queryClient.invalidateQueries({ queryKey: ["pakket", id] });
+    },
+  });
+}
+
+/**
+ * Haalt alle GEMMA-componenten op (publiek toegankelijk).
+ * De endpoint heeft pagination_class=None zodat alle componenten in één call
+ * worden teruggegeven als een gewone lijst (geen {count, results} wrapper).
+ */
+export function useGemmaComponenten() {
+  return useQuery({
+    queryKey: ["gemma-componenten"],
+    queryFn: () => api.get<GemmaComponent[]>("/api/v1/gemma/componenten/"),
+    staleTime: 10 * 60 * 1000, // 10 minuten — verandert zelden
+  });
+}
+
+/**
+ * Stelt de GEMMA-componentkoppelingen in voor een pakket.
+ * Vervangt de volledige bestaande set.
+ *
+ * PUT /api/v1/pakketten/{id}/gemma-componenten/
+ * Body: { gemma_component_ids: string[] }
+ */
+export function useStelPakketGemmaIn(pakketId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (gemma_component_ids: string[]) =>
+      api.put<{ gemma_component_ids: string[]; gemma_componenten: GemmaComponent[] }>(
+        `/api/v1/pakketten/${pakketId}/gemma-componenten/`,
+        { gemma_component_ids }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pakket", pakketId] });
+      queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
     },
   });
 }

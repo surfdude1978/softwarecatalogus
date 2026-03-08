@@ -13,6 +13,15 @@ export interface Organisatie {
   beschrijving: string;
 }
 
+export interface GemmaComponent {
+  id: string;
+  naam: string;
+  archimate_id: string;
+  type: "applicatiecomponent" | "applicatieservice" | "applicatiefunctie" | "anders";
+  beschrijving: string;
+  gemma_online_url: string;
+}
+
 export interface Pakket {
   id: string;
   naam: string;
@@ -26,6 +35,7 @@ export interface Pakket {
   documentatie_url: string;
   cloud_provider: string;
   aantal_gebruikers: number;
+  gemma_componenten?: GemmaComponent[];
 }
 
 export interface PakketGebruik {
@@ -45,15 +55,6 @@ export interface Standaard {
   versie: string;
   beschrijving: string;
   forum_standaardisatie_url: string;
-}
-
-export interface GemmaComponent {
-  id: string;
-  naam: string;
-  archimate_id: string;
-  type: "applicatiecomponent" | "applicatieservice" | "applicatiefunctie" | "anders";
-  beschrijving: string;
-  gemma_online_url: string;
 }
 
 export interface PaginatedResponse<T> {

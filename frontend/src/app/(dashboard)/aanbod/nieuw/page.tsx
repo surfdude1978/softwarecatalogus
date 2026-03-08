@@ -1,5 +1,5 @@
 "use client";
-// v2
+// v3 — met GEMMA-componentkiezer
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { ApiError } from "@/lib/api";
+import { GemmaComponentenKiezer } from "@/components/pakketten/GemmaComponentenKiezer";
+import { ApiError, api } from "@/lib/api";
 import type { PakketInput } from "@/types";
 
 // ── Opties ────────────────────────────────────────────────────────────────────
@@ -36,6 +37,10 @@ export default function NieuwPakketPage() {
     documentatie_url: "",
     cloud_provider: "",
   });
+
+  // Geselecteerde GEMMA-component IDs
+  const [gemmaIds, setGemmaIds] = useState<string[]>([]);
+  const [isSavingGemma, setIsSavingGemma] = useState(false);
 
   const [fouten, setFouten] = useState<Partial<Record<keyof PakketInput, string>>>({});
   const [apiError, setApiError] = useState<string | null>(null);
@@ -80,11 +85,24 @@ export default function NieuwPakketPage() {
     };
 
     try {
-      await aanmaak.mutateAsync(payload);
+      // Stap 1: pakket aanmaken — geeft het aangemaakte pakket terug (incl. id)
+      const nieuwPakket = await aanmaak.mutateAsync(payload);
+
+      // Stap 2: GEMMA-koppelingen instellen indien geselecteerd
+      if (gemmaIds.length > 0) {
+        setIsSavingGemma(true);
+        try {
+          await api.put(`/api/v1/pakketten/${nieuwPakket.id}/gemma-componenten/`, {
+            gemma_component_ids: gemmaIds,
+          });
+        } finally {
+          setIsSavingGemma(false);
+        }
+      }
+
       router.push("/aanbod");
     } catch (err) {
       if (err instanceof ApiError) {
-        // Veldspecifieke fouten van de backend (safe JSON parse via getFieldErrors)
         const fieldErrors = err.getFieldErrors();
         const veldFouten: typeof fouten = {};
         for (const [veld, berichten] of Object.entries(fieldErrors)) {
@@ -100,6 +118,8 @@ export default function NieuwPakketPage() {
       }
     }
   }
+
+  const isSaving = aanmaak.isPending || isSavingGemma;
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
@@ -161,6 +181,21 @@ export default function NieuwPakketPage() {
                   className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* GEMMA-componenten */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-base font-semibold text-gray-900">GEMMA-componenten</h2>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Koppel dit pakket aan de GEMMA-referentiecomponenten die het ondersteunt.
+                Dit bepaalt de positie van uw pakket op de architectuurkaart. U kunt dit
+                ook later aanpassen.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <GemmaComponentenKiezer value={gemmaIds} onChange={setGemmaIds} />
             </CardContent>
           </Card>
 
@@ -242,8 +277,8 @@ export default function NieuwPakketPage() {
                 Annuleren
               </Button>
             </Link>
-            <Button type="submit" disabled={aanmaak.isPending}>
-              {aanmaak.isPending ? "Opslaan…" : "Pakket aanmaken"}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Opslaan…" : "Pakket aanmaken"}
             </Button>
           </div>
         </div>
