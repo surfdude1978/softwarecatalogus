@@ -141,7 +141,8 @@ class TestGemmaComponentenAPI:
         url = reverse("api:gemma-component-list")
         response = api_client.get(url, {"parent__isnull": True})
         assert response.status_code == 200
-        namen = [c["naam"] for c in response.data["results"]]
+        # GemmaComponentViewSet heeft pagination_class = None → flat list
+        namen = [c["naam"] for c in response.data]
         assert "Zaaksysteem" in namen
         assert "Zaakafhandelservice" not in namen
 
@@ -156,4 +157,5 @@ class TestGemmaComponentenAPI:
         url = reverse("api:gemma-component-list")
         response = api_client.get(url, {"search": "Zaak"})
         assert response.status_code == 200
-        assert len(response.data["results"]) >= 1
+        # GemmaComponentViewSet heeft pagination_class = None → flat list
+        assert len(response.data) >= 1
