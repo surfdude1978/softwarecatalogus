@@ -1,0 +1,175 @@
+# Standaard waarden voor de Softwarecatalogus Helm chart
+
+# ====================
+# Backend (Django)
+# ====================
+backend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/vng-realisatie/softwarecatalogus-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    DJANGO_SETTINGS_MODULE: config.settings.production
+    ALLOWED_HOSTS: softwarecatalogus.vngrealisatie.nl,localhost
+  envFromSecret: softwarecatalogus-secrets
+
+# ====================
+# Frontend (Next.js)
+# ====================
+frontend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/vng-realisatie/softwarecatalogus-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  env:
+    NEXT_PUBLIC_API_URL: https://softwarecatalogus.vngrealisatie.nl
+
+# ====================
+# Celery Worker
+# ====================
+celeryWorker:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+# ====================
+# Celery Beat
+# ====================
+celeryBeat:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# ====================
+# PostgreSQL (Bitnami subchart)
+# ====================
+postgresql:
+  enabled: true
+  auth:
+    database: softwarecatalogus
+    username: swc
+    existingSecret: softwarecatalogus-secrets
+    secretKeys:
+      adminPasswordKey: POSTGRES_ADMIN_PASSWORD
+      userPasswordKey: POSTGRES_PASSWORD
+  primary:
+    persistence:
+      size: 10Gi
+
+# ====================
+# Redis (Bitnami subchart)
+# ====================
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      size: 1Gi
+
+# ====================
+# Meilisearch
+# ====================
+meilisearch:
+  enabled: true
+  image:
+    repository: getmeili/meilisearch
+    tag: v1.6
+  persistence:
+    size: 5Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  envFromSecret: softwarecatalogus-secrets
+
+# ====================
+# Ingress
+# ====================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: softwarecatalogus.vngrealisatie.nl
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /admin
+          pathType: Prefix
+          service: backend
+        - path: /static
+          pathType: Prefix
+          service: backend
+        - path: /media
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: softwarecatalogus-tls
+      hosts:
+        - softwarecatalogus.vngrealisatie.nl
+
+# ====================
+# Autoscaling
+# ====================
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# ====================
+# Security
+# ====================
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 1000
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000

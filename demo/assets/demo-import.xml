@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model xmlns="http://www.opengroup.org/xsd/archimate/3.0/"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.opengroup.org/xsd/archimate/3.0/ http://www.opengroup.org/xsd/archimate/3.0/archimate3_Diagram.xsd"
+       identifier="model-demo-001">
+  <name xml:lang="nl">GEMMA Demo Import</name>
+  <elements>
+    <element identifier="GEMMA-AC-DEMO" xsi:type="ApplicationComponent">
+      <name xml:lang="nl">Demo Applicatiecomponent</name>
+      <documentation xml:lang="nl">Tijdelijke demo-component voor AMEFF-importdemonstratie.</documentation>
+    </element>
+  </elements>
+</model>

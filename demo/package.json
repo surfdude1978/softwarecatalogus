@@ -1,0 +1,36 @@
+{
+  "name": "softwarecatalogus-demo",
+  "version": "2.0.0",
+  "description": "Geautomatiseerde Playwright-demo voor de Softwarecatalogus — 4 persona-video's",
+  "private": true,
+  "scripts": {
+    "setup-auth":    "npx ts-node setup-auth.ts",
+
+    "demo":          "npx ts-node run-demo.ts",
+    "scene":         "npx ts-node run-demo.ts --scene",
+
+    "suite":         "npx ts-node run-demo.ts --suite",
+    "all-suites":    "npx ts-node run-demo.ts --all-suites",
+
+    "publiek":       "npx ts-node run-demo.ts --suite publiek",
+    "gemeente":      "npx ts-node run-demo.ts --suite gemeente",
+    "leverancier":   "npx ts-node run-demo.ts --suite leverancier",
+    "vng":           "npx ts-node run-demo.ts --suite vng",
+
+    "merge":         "npx ts-node run-demo.ts --merge",
+
+    "list":          "npx ts-node run-demo.ts --list",
+    "list-suites":   "npx ts-node run-demo.ts --list-suites",
+
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.44.0",
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}

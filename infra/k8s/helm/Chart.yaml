@@ -1,0 +1,14 @@
+apiVersion: v2
+name: softwarecatalogus
+description: Helm chart voor de Softwarecatalogus — VNG Realisatie
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - softwarecatalogus
+  - vng
+  - gemeenten
+  - haven
+maintainers:
+  - name: VNG Realisatie
+    url: https://www.vngrealisatie.nl/

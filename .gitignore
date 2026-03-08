@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# Django
+*.log
+db.sqlite3
+backend/staticfiles/
+backend/media/
+backend/static/
+
+# Node
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# mypy
+.mypy_cache/
+
+# pytest / ruff
+.pytest_cache/
+.ruff_cache/
+coverage.xml
+
+# Demo output en auth-states (bevatten tokens)
+demo/output/
+demo/auth/
+demo/node_modules/
+
+# Infra secrets (nooit inchecken)
+infra/k8s/helm/secrets.yaml
+*.pem
+*.key
+
+# Meilisearch data
+data.ms/

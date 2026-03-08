@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "OTAP omgeving"
+        required: true
+        type: choice
+        options:
+          - test
+          - acceptatie
+          - productie
+      image_tag:
+        description: "Docker image tag (SHA of branch)"
+        required: true
+        default: "latest"
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy naar ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Helm opzetten
+        uses: azure/setup-helm@v4
+
+      - name: Kubeconfig instellen
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Helm deploy
+        run: |
+          helm upgrade --install \
+            softwarecatalogus \
+            ./infra/k8s/helm \
+            --namespace softwarecatalogus-${{ github.event.inputs.environment }} \
+            --create-namespace \
+            --set backend.image.tag=${{ github.event.inputs.image_tag }} \
+            --set frontend.image.tag=${{ github.event.inputs.image_tag }} \
+            --values ./infra/k8s/helm/values-${{ github.event.inputs.environment }}.yaml \
+            --wait \
+            --timeout 5m
+
+      - name: Deployment status controleren
+        run: |
+          kubectl rollout status deployment/softwarecatalogus-backend \
+            -n softwarecatalogus-${{ github.event.inputs.environment }} \
+            --timeout=120s
+          kubectl rollout status deployment/softwarecatalogus-frontend \
+            -n softwarecatalogus-${{ github.event.inputs.environment }} \
+            --timeout=120s
+
+      - name: Health check
+        run: |
+          INGRESS_HOST=$(kubectl get ingress -n softwarecatalogus-${{ github.event.inputs.environment }} -o jsonpath='{.items[0].spec.rules[0].host}')
+          echo "Checking health at https://${INGRESS_HOST}/api/v1/pakketten/?page_size=1"
+          curl -sf "https://${INGRESS_HOST}/api/v1/pakketten/?page_size=1" || exit 1
+        continue-on-error: true
