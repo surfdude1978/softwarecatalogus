@@ -46,6 +46,7 @@ urlpatterns = [
     path("export/pakketten.csv", export_views.ExportPakkettenCSV.as_view(), name="export-pakketten-csv"),
     path("export/pakketten.xlsx", export_views.ExportPakkettenExcel.as_view(), name="export-pakketten-xlsx"),
     path("export/pakketoverzicht.csv", export_views.ExportPakketOverzichtCSV.as_view(), name="export-overzicht-csv"),
+    path("export/pakketoverzicht.xlsx", export_views.ExportPakketOverzichtExcel.as_view(), name="export-overzicht-xlsx"),
     path("export/pakketoverzicht.ameff", export_views.ExportPakketOverzichtAMEFF.as_view(), name="export-overzicht-ameff"),
     # Admin: GEMMA AMEFF import
     path("admin/gemma/importeer/", admin_views.GemmaImportView.as_view(), name="admin-gemma-import"),

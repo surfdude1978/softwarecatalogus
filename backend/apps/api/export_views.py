@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from apps.architectuur.ameff_export import generate_ameff
+from apps.core.audit import log_actie, AuditLog
 from apps.pakketten.models import Pakket, PakketGebruik
 
 
@@ -131,6 +132,109 @@ class ExportPakketOverzichtCSV(APIView):
                 pg.notitie,
             ])
 
+        log_actie(
+            request,
+            AuditLog.Actie.EXPORT,
+            object_type="PakketOverzicht",
+            object_id=str(user.organisatie.pk),
+            object_omschrijving=user.organisatie.naam,
+            extra={"formaat": "csv", "records": gebruik.count()},
+        )
+
+        return response
+
+
+class ExportPakketOverzichtExcel(APIView):
+    """Exporteer eigen pakketoverzicht als Excel (.xlsx)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.utils import get_column_letter
+
+        user = request.user
+        if not user.organisatie:
+            return HttpResponse("Geen organisatie gekoppeld.", status=400)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Pakketoverzicht"
+
+        # Titelrij
+        org_naam = user.organisatie.naam
+        ws.merge_cells("A1:G1")
+        ws["A1"] = f"Pakketoverzicht — {org_naam}"
+        ws["A1"].font = Font(bold=True, size=14)
+        ws["A1"].alignment = Alignment(horizontal="left")
+
+        ws["A2"] = f"Geëxporteerd op: {datetime.now():%d-%m-%Y %H:%M}"
+        ws["A2"].font = Font(italic=True, size=10, color="888888")
+        ws.append([])  # Lege rij
+
+        # Header
+        headers = [
+            "Pakket", "Versie", "Leverancier", "Status gebruik",
+            "Startdatum", "Einddatum", "Notitie",
+            "GEMMA-componenten", "Standaarden",
+        ]
+        header_row = ws.max_row + 1
+        ws.append(headers)
+        header_fill = PatternFill("solid", fgColor="1F5C99")
+        for cell in ws[header_row]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center")
+
+        # Data
+        gebruik = PakketGebruik.objects.filter(
+            organisatie=user.organisatie
+        ).select_related(
+            "pakket", "pakket__leverancier"
+        ).prefetch_related(
+            "pakket__gemma_componenten",
+            "pakket__standaarden",
+        ).order_by("pakket__naam")
+
+        for pg in gebruik:
+            gemma_namen = ", ".join(
+                gc.naam for gc in pg.pakket.gemma_componenten.all()
+            )
+            standaard_namen = ", ".join(
+                s.naam for s in pg.pakket.standaarden.all()
+            )
+            ws.append([
+                pg.pakket.naam,
+                pg.pakket.versie or "",
+                pg.pakket.leverancier.naam if pg.pakket.leverancier else "",
+                pg.get_status_display(),
+                pg.start_datum.strftime("%d-%m-%Y") if pg.start_datum else "",
+                pg.eind_datum.strftime("%d-%m-%Y") if pg.eind_datum else "",
+                pg.notitie or "",
+                gemma_namen,
+                standaard_namen,
+            ])
+
+        # Kolombreedtes aanpassen
+        col_widths = [35, 12, 30, 15, 12, 12, 40, 40, 40]
+        for i, width in enumerate(col_widths, 1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+
+        # Bevroren headerrij
+        ws.freeze_panes = ws.cell(row=header_row + 1, column=1)
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        org_slug = org_naam.lower().replace(" ", "_")[:30]
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="pakketoverzicht_{org_slug}_{datetime.now():%Y%m%d}.xlsx"'
+        )
         return response
 
 

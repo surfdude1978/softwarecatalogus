@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import { AanbestedingenDashboardSectie } from "@/components/aanbestedingen/AanbestedingenWidget";
+import { ExportKnoppen } from "@/components/export/ExportKnoppen";
 
 const statusVariant: Record<string, "success" | "warning" | "default"> = {
   in_gebruik: "success",
@@ -50,9 +51,12 @@ export default function MijnLandschapPage() {
             Beheer de softwarepakketten van uw organisatie.
           </p>
         </div>
-        <Link href="/pakketten">
-          <Button>Pakket toevoegen</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportKnoppen compact formaten={["xlsx", "csv", "ameff"]} />
+          <Link href="/pakketten">
+            <Button>Pakket toevoegen</Button>
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (

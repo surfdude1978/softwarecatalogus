@@ -49,13 +49,14 @@ from apps.aanbestedingen.serializers import (
 )
 
 from .permissions import IsAanbodBeheerder, IsGebruikBeheerder, IsFunctioneelBeheerder
+from apps.core.audit import AuditLogMixin, log_actie, AuditLog
 
 
 # ====================
 # Publieke endpoints
 # ====================
 
-class PakketViewSet(viewsets.ModelViewSet):
+class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Pakketten in de softwarecatalogus.
 
@@ -185,7 +186,7 @@ class PaginaViewSet(viewsets.ReadOnlyModelViewSet):
 # Beveiligde endpoints
 # ====================
 
-class MijnPakketOverzichtViewSet(viewsets.ModelViewSet):
+class MijnPakketOverzichtViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Pakketoverzicht van de eigen organisatie.
 
@@ -311,7 +312,7 @@ class NotificatieViewSet(viewsets.ReadOnlyModelViewSet):
 # Admin endpoints
 # ====================
 
-class AdminOrganisatieViewSet(viewsets.ModelViewSet):
+class AdminOrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Admin beheer van organisaties (functioneel beheerder)."""
     queryset = Organisatie.objects.all()
     serializer_class = OrganisatieDetailSerializer
@@ -335,6 +336,12 @@ class AdminOrganisatieViewSet(viewsets.ModelViewSet):
             )
         organisatie.status = Organisatie.Status.ACTIEF
         organisatie.save(update_fields=["status", "gewijzigd_op"])
+        log_actie(
+            request,
+            AuditLog.Actie.GEFIATEERD,
+            instance=organisatie,
+            extra={"vorige_status": "concept"},
+        )
         return Response(OrganisatieDetailSerializer(organisatie).data)
 
     @action(detail=False, methods=["post"])
