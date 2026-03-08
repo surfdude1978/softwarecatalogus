@@ -125,7 +125,7 @@ jobs:
           cd frontend
           npm run type-check
 
-      - name: Tests draaien
+      - name: Tests draaien (incl. toegankelijkheid met jest-axe)
         run: |
           cd frontend
           npm test -- --coverage --watchAll=false

@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
+
+const navLinks = [
+  { href: "/pakketten", label: "Pakketten" },
+  { href: "/organisaties", label: "Organisaties" },
+  { href: "/standaarden", label: "Standaarden" },
+];
 
 function AuthButton() {
   const [mounted, setMounted] = useState(false);
@@ -17,7 +25,7 @@ function AuthButton() {
     return (
       <Link
         href="/login"
-        className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+        className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
       >
         Inloggen
       </Link>
@@ -27,14 +35,15 @@ function AuthButton() {
   return isAuthenticated ? (
     <Link
       href="/mijn-landschap"
-      className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+      aria-label={`Dashboard: ingelogd als ${user?.naam || "gebruiker"}`}
+      className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
     >
       {user?.naam || "Dashboard"}
     </Link>
   ) : (
     <Link
       href="/login"
-      className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+      className="rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
     >
       Inloggen
     </Link>
@@ -42,31 +51,41 @@ function AuthButton() {
 }
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="border-b border-gray-200 bg-white">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-xl font-bold text-primary-500">
+      <nav
+        aria-label="Hoofdnavigatie"
+        className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8"
+      >
+        <Link
+          href="/"
+          aria-label="Softwarecatalogus — Ga naar de startpagina"
+          className="text-xl font-bold text-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        >
           Softwarecatalogus
         </Link>
         <div className="flex items-center gap-6">
-          <Link
-            href="/pakketten"
-            className="text-sm font-medium text-gray-700 hover:text-primary-500"
-          >
-            Pakketten
-          </Link>
-          <Link
-            href="/organisaties"
-            className="text-sm font-medium text-gray-700 hover:text-primary-500"
-          >
-            Organisaties
-          </Link>
-          <Link
-            href="/standaarden"
-            className="text-sm font-medium text-gray-700 hover:text-primary-500"
-          >
-            Standaarden
-          </Link>
+          {navLinks.map(({ href, label }) => {
+            const isActive =
+              pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
+                  isActive
+                    ? "text-primary-600 underline underline-offset-4"
+                    : "text-gray-700 hover:text-primary-500"
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
           <AuthButton />
         </div>
       </nav>
