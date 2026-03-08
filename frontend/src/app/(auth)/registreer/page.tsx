@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
+import type { Organisatie, PaginatedResponse } from "@/types";
 
 export default function RegistreerPage() {
   const router = useRouter();
@@ -18,9 +21,25 @@ export default function RegistreerPage() {
     email: "",
     naam: "",
     telefoon: "",
+    organisatie: "",
     password: "",
     password_confirm: "",
   });
+
+  // Haal actieve organisaties op voor de keuzelijst
+  const { data: organisatiesData } = useQuery({
+    queryKey: ["organisaties-registreer"],
+    queryFn: () =>
+      api.get<PaginatedResponse<Organisatie>>("/api/v1/organisaties/?status=actief&page_size=200"),
+  });
+
+  const organisatieOpties = [
+    { value: "", label: "— Selecteer uw organisatie —" },
+    ...(organisatiesData?.results ?? []).map((org) => ({
+      value: org.id,
+      label: `${org.naam} (${org.type})`,
+    })),
+  ];
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -29,6 +48,11 @@ export default function RegistreerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!form.organisatie) {
+      setError("Selecteer uw organisatie.");
+      return;
+    }
 
     if (form.password !== form.password_confirm) {
       setError("Wachtwoorden komen niet overeen.");
@@ -42,7 +66,15 @@ export default function RegistreerPage() {
 
     setIsLoading(true);
     try {
-      await api.post("/api/v1/auth/registreer/", form);
+      const payload = {
+        email: form.email,
+        naam: form.naam,
+        telefoon: form.telefoon || undefined,
+        organisatie: form.organisatie,
+        password: form.password,
+        password_confirm: form.password_confirm,
+      };
+      await api.post("/api/v1/auth/registreer/", payload);
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -114,6 +146,21 @@ export default function RegistreerPage() {
               value={form.telefoon}
               onChange={(e) => updateField("telefoon", e.target.value)}
             />
+
+            <Select
+              id="organisatie"
+              label="Organisatie *"
+              options={organisatieOpties}
+              value={form.organisatie}
+              onChange={(e) => updateField("organisatie", e.target.value)}
+            />
+            <p className="text-xs text-gray-500">
+              Staat uw organisatie er niet bij?{" "}
+              <Link href="/registreer/organisatie" className="text-primary-500 hover:underline">
+                Registreer een nieuwe organisatie
+              </Link>
+            </p>
+
             <Input
               id="password"
               label="Wachtwoord (min. 10 tekens)"

@@ -37,7 +37,7 @@ from apps.content.serializers import (
     NieuwsberichtDetailSerializer,
     PaginaSerializer,
 )
-from apps.gebruikers.models import Notificatie
+from apps.gebruikers.models import Notificatie, User
 from apps.gebruikers.serializers import (
     UserProfileSerializer,
     NotificatieSerializer,
@@ -372,6 +372,82 @@ class AdminOrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
         bron.status = Organisatie.Status.INACTIEF
         bron.save(update_fields=["status", "gewijzigd_op"])
         return Response({"detail": f"{bron.naam} samengevoegd met {doel.naam}."})
+
+
+class AdminGebruikerViewSet(AuditLogMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    Admin beheer van gebruikers (functioneel beheerder).
+
+    list: Alle gebruikers (optioneel gefilterd op ?status=wacht_op_fiattering).
+    retrieve: Details van een gebruiker.
+    wachtend: Lijst van gebruikers die wachten op fiattering.
+    fiatteren: Activeer een wachtende gebruiker.
+    """
+    queryset = User.objects.select_related("organisatie").all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsFunctioneelBeheerder]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["naam", "email", "organisatie__naam"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
+    @action(detail=False, methods=["get"])
+    def wachtend(self, request):
+        """Lijst van gebruikers die wachten op fiattering."""
+        wachtenden = (
+            User.objects.filter(status=User.Status.WACHT_OP_FIATTERING)
+            .exclude(email="AnonymousUser")  # guardian anonieme gebruiker uitsluiten
+            .select_related("organisatie")
+            .order_by("aangemaakt_op")
+        )
+        serializer = UserProfileSerializer(wachtenden, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def fiatteren(self, request, pk=None):
+        """Activeer een wachtende gebruiker na handmatige controle."""
+        gebruiker = self.get_object()
+        if gebruiker.status != User.Status.WACHT_OP_FIATTERING:
+            return Response(
+                {"detail": "Alleen wachtende gebruikers kunnen worden gefiatteerd."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        gebruiker.status = User.Status.ACTIEF
+        gebruiker.save(update_fields=["status"])
+        log_actie(
+            request,
+            AuditLog.Actie.GEFIATEERD,
+            instance=gebruiker,
+            extra={"vorige_status": "wacht_op_fiattering"},
+        )
+        # TODO: Stuur welkomstmail via Celery (send_welcome_email.delay(gebruiker.id))
+        return Response(UserProfileSerializer(gebruiker).data)
+
+    @action(detail=True, methods=["post"])
+    def afwijzen(self, request, pk=None):
+        """Wijs een wachtende gebruiker af (status → inactief)."""
+        gebruiker = self.get_object()
+        if gebruiker.status != User.Status.WACHT_OP_FIATTERING:
+            return Response(
+                {"detail": "Alleen wachtende gebruikers kunnen worden afgewezen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        reden = request.data.get("reden", "")
+        gebruiker.status = User.Status.INACTIEF
+        gebruiker.save(update_fields=["status"])
+        log_actie(
+            request,
+            AuditLog.Actie.GEFIATEERD,
+            instance=gebruiker,
+            extra={"vorige_status": "wacht_op_fiattering", "afgewezen": True, "reden": reden},
+        )
+        # TODO: Stuur afwijzingsmail via Celery
+        return Response({"detail": "Gebruiker afgewezen."})
 
 
 # ====================

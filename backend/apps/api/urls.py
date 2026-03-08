@@ -29,6 +29,7 @@ router.register(r"notificaties", views.NotificatieViewSet, basename="notificatie
 
 # Admin endpoints
 router.register(r"admin/organisaties", views.AdminOrganisatieViewSet, basename="admin-organisatie")
+router.register(r"admin/gebruikers", views.AdminGebruikerViewSet, basename="admin-gebruiker")
 
 urlpatterns = [
     path("", include(router.urls)),
