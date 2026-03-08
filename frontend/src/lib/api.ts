@@ -1,9 +1,17 @@
 /**
  * API client voor de Softwarecatalogus backend.
+ *
+ * Auth-modus wordt bepaald door de omgevingsvariabele NEXT_PUBLIC_AUTH_MODE:
+ *   - "cookie"      → HttpOnly-cookie (productie); credentials: "include"
+ *   - "localStorage"→ Bearer-token uit localStorage (development, standaard)
  */
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+/** True wanneer de app in cookie-auth-modus draait (productie). */
+export const AUTH_COOKIE_MODE =
+  process.env.NEXT_PUBLIC_AUTH_MODE === "cookie";
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
@@ -33,13 +41,19 @@ class ApiClient {
       ...(fetchOptions.headers as Record<string, string>),
     };
 
-    // JWT token toevoegen indien aanwezig
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (AUTH_COOKIE_MODE) {
+      // Cookie-modus: credentials: "include" zorgt dat de browser de HttpOnly
+      // cookie automatisch meestuurt. Geen Authorization-header nodig.
+      (fetchOptions as RequestInit).credentials = "include";
+    } else {
+      // localStorage-modus: JWT-token handmatig meesturen in de header.
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
     }
 
     const response = await fetch(url, {

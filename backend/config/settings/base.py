@@ -206,7 +206,15 @@ CACHES = {
 MEILISEARCH_URL = config("MEILISEARCH_URL", default="http://meilisearch:7700")
 MEILISEARCH_API_KEY = config("MEILISEARCH_API_KEY", default="masterkey_dev_only")
 
+# Cookie-gebaseerde JWT authenticatie (standaard uit, aan in productie)
+JWT_AUTH_COOKIE_ENABLED = config("JWT_AUTH_COOKIE_ENABLED", default=False, cast=bool)
+JWT_AUTH_COOKIE = "swc_access"
+JWT_AUTH_REFRESH_COOKIE = "swc_refresh"
+JWT_AUTH_COOKIE_SECURE = config("JWT_AUTH_COOKIE_SECURE", default=False, cast=bool)
+JWT_AUTH_COOKIE_SAMESITE = "Strict"
+
 # CORS
+CORS_ALLOW_CREDENTIALS = True  # Vereist voor cookie-gebaseerde cross-origin verzoeken
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

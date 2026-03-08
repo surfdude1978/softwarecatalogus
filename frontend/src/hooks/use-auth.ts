@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, AUTH_COOKIE_MODE } from "@/lib/api";
 
 interface User {
   id: string;
@@ -47,14 +47,20 @@ export const useAuth = create<AuthState>((set, get) => ({
       }>("/api/v1/auth/login/", { email, password });
 
       if (data.totp_required && data.temp_token) {
+        // Tijdelijk token bewaren voor de TOTP-stap (altijd in localStorage,
+        // ook in cookie-modus — het is geen langlevend auth-token).
         localStorage.setItem("temp_token", data.temp_token);
         set({ isLoading: false });
         return { totp_required: true };
       }
 
       if (data.access && data.refresh) {
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
+        if (!AUTH_COOKIE_MODE) {
+          // localStorage-modus: tokens handmatig opslaan.
+          localStorage.setItem("access_token", data.access);
+          localStorage.setItem("refresh_token", data.refresh);
+        }
+        // In cookie-modus: de server heeft al HttpOnly-cookies ingesteld.
         set({
           user: data.user || null,
           isAuthenticated: true,
@@ -83,9 +89,16 @@ export const useAuth = create<AuthState>((set, get) => ({
         headers: { Authorization: `Bearer ${tempToken}` },
       });
 
+      // Tijdelijk token altijd verwijderen
       localStorage.removeItem("temp_token");
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
+
+      if (!AUTH_COOKIE_MODE) {
+        // localStorage-modus: tokens opslaan
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+      }
+      // In cookie-modus: de server heeft al HttpOnly-cookies ingesteld.
+
       set({
         user: data.user,
         isAuthenticated: true,
@@ -93,7 +106,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       });
     } catch (err) {
       const message = err instanceof ApiError
-        ? JSON.parse(err.body)?.detail || "Ongeldige code."
+        ? err.getDetail("Ongeldige code.")
         : "Er is een fout opgetreden.";
       set({ isLoading: false, error: message });
       throw err;
@@ -101,11 +114,14 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    const refresh = localStorage.getItem("refresh_token");
+    // In localStorage-modus: refresh token meesturen zodat de server het kan
+    // blacklisten.  In cookie-modus: de server leest het refresh-cookie zelf.
+    const refresh = AUTH_COOKIE_MODE
+      ? undefined
+      : localStorage.getItem("refresh_token") ?? undefined;
+
     try {
-      if (refresh) {
-        await api.post("/api/v1/auth/logout/", { refresh });
-      }
+      await api.post("/api/v1/auth/logout/", refresh ? { refresh } : {});
     } catch {
       // Ignore logout errors
     } finally {
@@ -117,12 +133,16 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   fetchProfile: async () => {
-    // Controleer de token direct in localStorage, niet de Zustand-state.
-    // Dit werkt ook wanneer de token extern is ingesteld (bijv. via loginApi in de demo)
-    // zonder dat isAuthenticated al op true staat in de store.
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) return;
+    if (!AUTH_COOKIE_MODE) {
+      // localStorage-modus: controleer de token direct in localStorage.
+      // Dit werkt ook wanneer de token extern is ingesteld (bijv. via loginApi in de demo)
+      // zonder dat isAuthenticated al op true staat in de store.
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (!token) return;
+    }
+    // Cookie-modus: stuur altijd een verzoek — de browser voegt de cookie automatisch toe.
+
     try {
       const user = await api.get<User>("/api/v1/profiel/mij/");
       set({ user, isAuthenticated: true });
@@ -136,10 +156,16 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   initialize: () => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        set({ isAuthenticated: true });
+      if (AUTH_COOKIE_MODE) {
+        // Cookie-modus: altijd proberen sessie te herstellen via cookie.
         get().fetchProfile();
+      } else {
+        // localStorage-modus: alleen ophalen als er een token is.
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          set({ isAuthenticated: true });
+          get().fetchProfile();
+        }
       }
     }
   },

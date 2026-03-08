@@ -12,6 +12,10 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Cookie-gebaseerde JWT auth (veilig in productie)
+JWT_AUTH_COOKIE_ENABLED = True
+JWT_AUTH_COOKIE_SECURE = True
+
 # CORS - aanpassen aan productiedomein
 CORS_ALLOWED_ORIGINS = [
     "https://softwarecatalogus.nl",

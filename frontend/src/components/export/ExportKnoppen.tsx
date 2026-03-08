@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { AUTH_COOKIE_MODE } from "@/lib/api";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -56,13 +57,13 @@ function useExport() {
     setFout(null);
 
     try {
+      const fetchOpts: RequestInit = AUTH_COOKIE_MODE
+        ? { credentials: "include" }
+        : { headers: { Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}` } };
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}${optie.endpoint}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
-          },
-        }
+        fetchOpts
       );
 
       if (!response.ok) {

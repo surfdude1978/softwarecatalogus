@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,14 +14,72 @@ from apps.gebruikers.serializers import UserRegistratieSerializer, UserProfileSe
 from apps.api.permissions import IsFullyAuthenticated, IsTOTPPending
 
 
+# ── Cookie-helpers ────────────────────────────────────────────────────────────
+
+def _cookie_auth_actief() -> bool:
+    """Geeft True terug als cookie-gebaseerde JWT-auth is ingeschakeld."""
+    return getattr(settings, "JWT_AUTH_COOKIE_ENABLED", False)
+
+
+def _stel_auth_cookies_in(response, access_token: str, refresh_token: str) -> None:
+    """Stel HttpOnly JWT-cookies in op de response (alleen in cookie-modus)."""
+    if not _cookie_auth_actief():
+        return
+
+    access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME")
+    refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME")
+    secure = getattr(settings, "JWT_AUTH_COOKIE_SECURE", False)
+    samesite = getattr(settings, "JWT_AUTH_COOKIE_SAMESITE", "Strict")
+
+    response.set_cookie(
+        key=getattr(settings, "JWT_AUTH_COOKIE", "swc_access"),
+        value=access_token,
+        max_age=int(access_lifetime.total_seconds()) if access_lifetime else 1800,
+        httponly=True,
+        secure=secure,
+        samesite=samesite,
+        path="/",
+    )
+    response.set_cookie(
+        key=getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh"),
+        value=refresh_token,
+        max_age=int(refresh_lifetime.total_seconds()) if refresh_lifetime else 86400,
+        httponly=True,
+        secure=secure,
+        samesite=samesite,
+        path="/",
+    )
+
+
+def _wis_auth_cookies(response) -> None:
+    """Verwijder de JWT-cookies van de response (alleen in cookie-modus)."""
+    if not _cookie_auth_actief():
+        return
+
+    samesite = getattr(settings, "JWT_AUTH_COOKIE_SAMESITE", "Strict")
+    response.delete_cookie(
+        key=getattr(settings, "JWT_AUTH_COOKIE", "swc_access"),
+        path="/",
+        samesite=samesite,
+    )
+    response.delete_cookie(
+        key=getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh"),
+        path="/",
+        samesite=samesite,
+    )
+
+
+# ── Views ─────────────────────────────────────────────────────────────────────
+
 class LoginView(APIView):
     """
     Stap 1 van login: e-mail + wachtwoord.
     Retourneert een tijdelijk token als 2FA is ingeschakeld,
     of direct JWT tokens als 2FA niet is ingeschakeld.
+    In cookie-modus worden de tokens tevens als HttpOnly-cookie ingesteld.
     """
     permission_classes = [AllowAny]
-    
+
     def dispatch(self, request, *args, **kwargs):
         # CSRF exempt voor deze view
         return super().dispatch(request, *args, **kwargs)
@@ -66,12 +125,15 @@ class LoginView(APIView):
 
         # Geen 2FA: direct inloggen
         refresh = RefreshToken.for_user(user)
-        return Response({
+        access = str(refresh.access_token)
+        response = Response({
             "totp_required": False,
-            "access": str(refresh.access_token),
+            "access": access,
             "refresh": str(refresh),
             "user": UserProfileSerializer(user).data,
         })
+        _stel_auth_cookies_in(response, access, str(refresh))
+        return response
 
 
 class VerifyTOTPView(APIView):
@@ -80,6 +142,7 @@ class VerifyTOTPView(APIView):
 
     Accepteert uitsluitend een pre-2FA token (totp_pending=True).
     Na succesvolle verificatie worden normale access/refresh tokens uitgegeven.
+    In cookie-modus worden de tokens tevens als HttpOnly-cookie ingesteld.
     """
     permission_classes = [IsTOTPPending]
 
@@ -107,17 +170,20 @@ class VerifyTOTPView(APIView):
             )
 
         refresh = RefreshToken.for_user(user)
-        return Response({
-            "access": str(refresh.access_token),
+        access = str(refresh.access_token)
+        response = Response({
+            "access": access,
             "refresh": str(refresh),
             "user": UserProfileSerializer(user).data,
         })
+        _stel_auth_cookies_in(response, access, str(refresh))
+        return response
 
 
 class RegistratieView(APIView):
     """Gebruikersregistratie."""
     permission_classes = [AllowAny]
-    
+
     def dispatch(self, request, *args, **kwargs):
         # CSRF exempt voor deze view
         return super().dispatch(request, *args, **kwargs)
@@ -136,24 +202,37 @@ class RegistratieView(APIView):
 
 
 class LogoutView(APIView):
-    """Logout: blacklist het refresh token."""
+    """
+    Logout: blacklist het refresh token.
+    In cookie-modus wordt het refresh token uit de cookie gelezen en worden
+    beide cookies gewist.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # Lees refresh token uit request body; val terug op cookie in cookie-modus
         refresh_token = request.data.get("refresh")
+        if not refresh_token and _cookie_auth_actief():
+            refresh_token = request.COOKIES.get(
+                getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh")
+            )
+
         if refresh_token:
             try:
                 token = RefreshToken(refresh_token)
                 token.blacklist()
             except Exception:
                 pass
-        return Response({"detail": "Uitgelogd."})
+
+        response = Response({"detail": "Uitgelogd."})
+        _wis_auth_cookies(response)
+        return response
 
 
 class WachtwoordResetRequestView(APIView):
     """Wachtwoord reset aanvragen (stuurt e-mail)."""
     permission_classes = [AllowAny]
-    
+
     def dispatch(self, request, *args, **kwargs):
         # CSRF exempt voor deze view
         return super().dispatch(request, *args, **kwargs)
