@@ -30,7 +30,7 @@ export interface GemmaKaartData {
 export function useGemmaKaart() {
   return useQuery<GemmaKaartData>({
     queryKey: ["gemma-kaart"],
-    queryFn: () => api.get<GemmaKaartData>("/gemma/kaart/"),
+    queryFn: () => api.get<GemmaKaartData>("/api/v1/gemma/kaart/"),
     staleTime: 5 * 60 * 1000, // 5 minuten
   });
 }
