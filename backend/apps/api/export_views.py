@@ -4,10 +4,11 @@ import io
 from datetime import datetime
 
 from django.http import HttpResponse
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from apps.architectuur.ameff_export import generate_ameff
+from apps.api.permissions import IsFullyAuthenticated, IsFunctioneelBeheerder
 from apps.core.audit import log_actie, AuditLog
 from apps.pakketten.models import Pakket, PakketGebruik
 
@@ -102,7 +103,7 @@ class ExportPakkettenExcel(APIView):
 
 class ExportPakketOverzichtCSV(APIView):
     """Exporteer eigen pakketoverzicht als CSV."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
         user = request.user
@@ -146,7 +147,7 @@ class ExportPakketOverzichtCSV(APIView):
 
 class ExportPakketOverzichtExcel(APIView):
     """Exporteer eigen pakketoverzicht als Excel (.xlsx)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
         import openpyxl
@@ -240,7 +241,7 @@ class ExportPakketOverzichtExcel(APIView):
 
 class ExportPakketOverzichtAMEFF(APIView):
     """Exporteer eigen pakketoverzicht als AMEFF (ArchiMate Exchange)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
         user = request.user
@@ -253,4 +254,105 @@ class ExportPakketOverzichtAMEFF(APIView):
         response["Content-Disposition"] = (
             f'attachment; filename="pakketoverzicht_{user.organisatie.naam}_{datetime.now():%Y%m%d}.ameff"'
         )
+        return response
+
+
+class ExportAuditLogCSV(APIView):
+    """
+    Exporteer de audit log als CSV.
+
+    Uitsluitend toegankelijk voor de **functioneel beheerder**.
+    Ondersteunt optionele filters via query parameters:
+
+    * ``actie`` — filter op actie (bijv. ``aangemaakt``, ``verwijderd``)
+    * ``actor_email`` — filter op e-mailadres van de actor
+    * ``object_type`` — filter op objecttype (bijv. ``Pakket``)
+    * ``van`` — begin datum/tijd (ISO, bijv. ``2025-01-01``)
+    * ``tot`` — eind datum/tijd (ISO, bijv. ``2025-12-31``)
+    """
+
+    permission_classes = [IsFunctioneelBeheerder]
+
+    def get(self, request):
+        from zoneinfo import ZoneInfo
+        from datetime import datetime as _dt
+        from django.utils.dateparse import parse_datetime, parse_date
+        from django.utils.timezone import make_aware
+
+        ams = ZoneInfo("Europe/Amsterdam")
+        qs = AuditLog.objects.all()
+
+        # ── Filters ─────────────────────────────────────────────────────────
+        actie = request.query_params.get("actie")
+        if actie:
+            qs = qs.filter(actie=actie)
+
+        actor_email = request.query_params.get("actor_email")
+        if actor_email:
+            qs = qs.filter(actor_email__icontains=actor_email)
+
+        object_type = request.query_params.get("object_type")
+        if object_type:
+            qs = qs.filter(object_type__iexact=object_type)
+
+        van = request.query_params.get("van")
+        if van:
+            dt = parse_datetime(van)
+            if not dt:
+                d = parse_date(van)
+                if d:
+                    dt = make_aware(_dt(d.year, d.month, d.day, 0, 0, 0), ams)
+            if dt:
+                qs = qs.filter(tijdstip__gte=dt)
+
+        tot = request.query_params.get("tot")
+        if tot:
+            dt = parse_datetime(tot)
+            if not dt:
+                d = parse_date(tot)
+                if d:
+                    dt = make_aware(_dt(d.year, d.month, d.day, 23, 59, 59), ams)
+            if dt:
+                qs = qs.filter(tijdstip__lte=dt)
+
+        # ── Bouw CSV ─────────────────────────────────────────────────────────
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="auditlog_{datetime.now():%Y%m%d_%H%M}.csv"'
+        )
+        response.write("\ufeff")  # BOM voor Excel-compatibiliteit
+
+        writer = csv.writer(response, delimiter=";")
+        writer.writerow([
+            "Tijdstip", "Actor e-mail", "Actor ID",
+            "Actie", "Object type", "Object ID", "Object",
+            "IP-adres", "User-agent",
+        ])
+
+        for entry in qs.order_by("-tijdstip"):
+            writer.writerow([
+                entry.tijdstip.strftime("%Y-%m-%d %H:%M:%S"),
+                entry.actor_email,
+                entry.actor_id or "",
+                entry.actie,
+                entry.object_type,
+                entry.object_id or "",
+                entry.object_omschrijving,
+                entry.ip_adres or "",
+                entry.user_agent[:100],
+            ])
+
+        # Log de export zelf ook
+        log_actie(
+            request,
+            AuditLog.Actie.EXPORT,
+            object_type="AuditLog",
+            object_omschrijving=f"CSV export ({qs.count()} regels)",
+            extra={
+                "formaat": "csv",
+                "records": qs.count(),
+                "filters": dict(request.query_params),
+            },
+        )
+
         return response

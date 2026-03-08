@@ -50,4 +50,6 @@ urlpatterns = [
     path("export/pakketoverzicht.ameff", export_views.ExportPakketOverzichtAMEFF.as_view(), name="export-overzicht-ameff"),
     # Admin: GEMMA AMEFF import
     path("admin/gemma/importeer/", admin_views.GemmaImportView.as_view(), name="admin-gemma-import"),
+    # Admin: Audit log export (alleen functioneel beheerder)
+    path("admin/auditlog.csv", export_views.ExportAuditLogCSV.as_view(), name="export-auditlog-csv"),
 ]

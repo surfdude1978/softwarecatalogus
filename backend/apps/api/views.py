@@ -105,7 +105,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
         return qs
 
 
-class OrganisatieViewSet(viewsets.ModelViewSet):
+class OrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Organisaties (gemeenten, leveranciers, samenwerkingsverbanden).
     """
@@ -225,7 +225,7 @@ class GemeentePakketOverzichtViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
 
-class KoppelingViewSet(viewsets.ModelViewSet):
+class KoppelingViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Koppelingen tussen pakketten in eigen landschap."""
     serializer_class = KoppelingSerializer
     permission_classes = [IsGebruikBeheerder]
@@ -240,7 +240,7 @@ class KoppelingViewSet(viewsets.ModelViewSet):
         return Koppeling.objects.none()
 
 
-class DocumentViewSet(viewsets.ModelViewSet):
+class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Documenten (DPIA's, verwerkersovereenkomsten, etc.)."""
     serializer_class = DocumentSerializer
     filter_backends = [DjangoFilterBackend]
