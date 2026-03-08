@@ -1,4 +1,5 @@
 """Production settings."""
+from decouple import config as env_config
 from .base import *  # noqa: F401, F403
 
 DEBUG = False
@@ -31,3 +32,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://softwarecatalogus.nl",
     "https://www.softwarecatalogus.nl",
 ]
+
+# ── TenderNed — echte API in productie ────────────────────────────────────
+# In productie: demo_mode=False zodat de echte TenderNed API wordt gebruikt.
+# Stel TENDERNED_DEMO_MODE=True in .env om terug te schakelen naar demo-data.
+TENDERNED_DEMO_MODE = env_config("TENDERNED_DEMO_MODE", default=False, cast=bool)
+TENDERNED_TIMEOUT = env_config("TENDERNED_TIMEOUT", default=60, cast=int)

@@ -282,7 +282,11 @@ class TenderNedClient:
     BASE_URL = "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties"
 
     def __init__(self, demo_mode: bool = False, base_url: Optional[str] = None):
-        self.demo_mode = demo_mode or getattr(settings, "TENDERNED_DEMO_MODE", True)
+        # Lees demo_mode uit settings; expliciete parameter heeft voorrang.
+        # Fallback False: in productie wordt de echte API gebruikt tenzij
+        # TENDERNED_DEMO_MODE=True in .env staat.
+        settings_demo = getattr(settings, "TENDERNED_DEMO_MODE", False)
+        self.demo_mode = demo_mode or settings_demo
         self.base_url = base_url or getattr(settings, "TENDERNED_API_URL", self.BASE_URL)
         self.timeout = getattr(settings, "TENDERNED_TIMEOUT", 30)
 

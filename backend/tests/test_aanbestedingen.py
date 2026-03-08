@@ -670,3 +670,74 @@ class TestAanbestedingenAPI:
         url = reverse("api:aanbesteding-list")
         response = api_client.get(url, {"limit": 5})
         assert response.status_code == 200
+
+
+# ─────────────────────────────────────────────────────────────────
+# Productie-modus configuratie (issue #14)
+# ─────────────────────────────────────────────────────────────────
+
+class TestProductieModus:
+    """Controleert dat de client correct schakelt tussen demo- en live-modus."""
+
+    def test_demo_mode_standaard_in_development(self):
+        """In development-instellingen is demo_mode True (veilige standaard)."""
+        with override_settings(TENDERNED_DEMO_MODE=True):
+            client = TenderNedClient()
+            assert client.demo_mode is True
+
+    def test_live_mode_via_settings(self):
+        """Met TENDERNED_DEMO_MODE=False schakelt de client naar live-modus."""
+        with override_settings(TENDERNED_DEMO_MODE=False):
+            client = TenderNedClient()
+            assert client.demo_mode is False
+
+    def test_expliciete_demo_mode_parameter_heeft_voorrang(self):
+        """Expliciete demo_mode=True overschrijft settings."""
+        with override_settings(TENDERNED_DEMO_MODE=False):
+            client = TenderNedClient(demo_mode=True)
+            assert client.demo_mode is True
+
+    def test_productie_api_url_correct(self):
+        """In productie-modus gebruikt de client de juiste TenderNed papi URL."""
+        verwachte_url = "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties"
+        with override_settings(TENDERNED_DEMO_MODE=False, TENDERNED_API_URL=verwachte_url):
+            client = TenderNedClient()
+            assert client.base_url == verwachte_url
+
+    def test_timeout_configureerbaar(self):
+        """Timeout is configureerbaar via TENDERNED_TIMEOUT setting."""
+        with override_settings(TENDERNED_TIMEOUT=60):
+            client = TenderNedClient()
+            assert client.timeout == 60
+
+    @patch("apps.aanbestedingen.client.requests.get")
+    def test_live_modus_roept_echte_api_aan(self, mock_get):
+        """In live-modus wordt de echte TenderNed API aangeroepen (niet demo-data)."""
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: {"content": [], "last": True},
+        )
+        with override_settings(TENDERNED_DEMO_MODE=False):
+            client = TenderNedClient(
+                demo_mode=False,
+                base_url="https://mock.tenderned.nl/api",
+            )
+            client.haal_ict_aanbestedingen_op(dagen_terug=1, max_resultaten=5)
+
+        assert mock_get.called, "requests.get moet aangeroepen zijn in live-modus"
+
+    def test_demo_modus_roept_geen_api_aan(self):
+        """In demo-modus worden geen HTTP-verzoeken gedaan."""
+        with patch("apps.aanbestedingen.client.requests.get") as mock_get:
+            client = TenderNedClient(demo_mode=True)
+            resultaten = client.haal_ict_aanbestedingen_op(dagen_terug=7, max_resultaten=10)
+            assert not mock_get.called, "requests.get mag NIET aangeroepen worden in demo-modus"
+            assert len(resultaten) > 0, "Demo-modus moet voorbeelddata teruggeven"
+
+    def test_productie_settings_override_base(self):
+        """Productie-instellingen: TENDERNED_DEMO_MODE standaard False."""
+        # Simuleer productie-instellingen
+        with override_settings(TENDERNED_DEMO_MODE=False, TENDERNED_TIMEOUT=60):
+            client = TenderNedClient()
+            assert client.demo_mode is False
+            assert client.timeout == 60

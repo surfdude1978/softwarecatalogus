@@ -237,11 +237,13 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@softwarecatalogus.nl")
 
 # TenderNed Open Data integratie
+# Publieke papi REST-endpoint (geen API-sleutel vereist)
 TENDERNED_API_URL = config(
     "TENDERNED_API_URL",
-    default="https://www.tenderned.nl/aankondigingen/api/aankondigingen",
+    default="https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties",
 )
-# In development/demo: gebruik voorbeelddata ipv echte API
+# In development: gebruik voorbeelddata (demo_mode=True).
+# In productie wordt dit overschreven naar False via production.py of .env.
 TENDERNED_DEMO_MODE = config("TENDERNED_DEMO_MODE", default=True, cast=bool)
 TENDERNED_TIMEOUT = config("TENDERNED_TIMEOUT", default=30, cast=int)
 
