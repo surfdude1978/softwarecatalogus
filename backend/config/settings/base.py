@@ -43,6 +43,7 @@ LOCAL_APPS = [
     "apps.architectuur",
     "apps.documenten",
     "apps.content",
+    "apps.aanbestedingen",
     "apps.api",
 ]
 
@@ -225,3 +226,21 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@softwarecatalogus.nl")
+
+# TenderNed Open Data integratie
+TENDERNED_API_URL = config(
+    "TENDERNED_API_URL",
+    default="https://www.tenderned.nl/aankondigingen/api/aankondigingen",
+)
+# In development/demo: gebruik voorbeelddata ipv echte API
+TENDERNED_DEMO_MODE = config("TENDERNED_DEMO_MODE", default=True, cast=bool)
+TENDERNED_TIMEOUT = config("TENDERNED_TIMEOUT", default=30, cast=int)
+
+# Celery Beat schedule voor dagelijkse TenderNed sync
+CELERY_BEAT_SCHEDULE = {
+    "sync-tenderned-dagelijks": {
+        "task": "aanbestedingen.sync_tenderned",
+        "schedule": 86400,  # Elke 24 uur
+        "kwargs": {"dagen_terug": 7, "max_resultaten": 500},
+    },
+}

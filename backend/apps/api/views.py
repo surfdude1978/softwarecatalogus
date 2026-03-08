@@ -42,6 +42,12 @@ from apps.gebruikers.serializers import (
     NotificatieSerializer,
 )
 
+from apps.aanbestedingen.models import Aanbesteding
+from apps.aanbestedingen.serializers import (
+    AanbestedingenListSerializer,
+    AanbestedingenDetailSerializer,
+)
+
 from .permissions import IsAanbodBeheerder, IsGebruikBeheerder, IsFunctioneelBeheerder
 
 
@@ -358,3 +364,87 @@ class AdminOrganisatieViewSet(viewsets.ModelViewSet):
         bron.status = Organisatie.Status.INACTIEF
         bron.save(update_fields=["status", "gewijzigd_op"])
         return Response({"detail": f"{bron.naam} samengevoegd met {doel.naam}."})
+
+
+# ====================
+# Aanbestedingen (TenderNed)
+# ====================
+
+class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ICT-aanbestedingen van Nederlandse gemeenten vanuit TenderNed.
+
+    list: Overzicht van recente ICT-aanbestedingen (publiek, geen auth).
+    retrieve: Detail van een aanbesteding.
+
+    Filterparameters:
+    - type: europees | nationaal
+    - status: aankondiging | gunning | rectificatie | vooraankondiging
+    - organisatie: UUID van gekoppelde gemeente
+    - publicatiedatum__gte: Datum vanaf (YYYY-MM-DD)
+    - publicatiedatum__lte: Datum tot (YYYY-MM-DD)
+    """
+
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        "type": ["exact"],
+        "status": ["exact"],
+        "organisatie": ["exact"],
+        "publicatiedatum": ["gte", "lte", "exact"],
+    }
+    search_fields = [
+        "naam",
+        "aanbestedende_dienst",
+        "omschrijving",
+        "cpv_omschrijvingen",
+    ]
+    ordering_fields = ["publicatiedatum", "sluitingsdatum", "waarde_geschat", "naam"]
+    ordering = ["-publicatiedatum"]
+
+    def get_queryset(self):
+        qs = Aanbesteding.objects.prefetch_related(
+            "gemma_componenten",
+            "relevante_pakketten__leverancier",
+        ).select_related("organisatie")
+
+        # Filter op gemeente (via organisatie.naam fuzzy-match)
+        gemeente = self.request.query_params.get("gemeente")
+        if gemeente:
+            qs = qs.filter(aanbestedende_dienst__icontains=gemeente)
+
+        # Filter op CPV-code
+        cpv = self.request.query_params.get("cpv")
+        if cpv:
+            qs = qs.filter(cpv_codes__contains=[cpv])
+
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return AanbestedingenDetailSerializer
+        return AanbestedingenListSerializer
+
+    def list(self, request, *args, **kwargs):
+        """
+        Geeft een gepagineerde lijst van recente ICT-aanbestedingen.
+        Standaard: laatste 25 resultaten gesorteerd op publicatiedatum.
+        """
+        # Beperk de lijst-view tot 50 resultaten voor de widget
+        limit = min(int(request.query_params.get("limit", 25)), 50)
+        qs = self.filter_queryset(self.get_queryset())
+
+        if "limit" in request.query_params:
+            serializer = self.get_serializer(qs[:limit], many=True)
+            return Response({
+                "count": qs.count(),
+                "results": serializer.data,
+            })
+
+        return super().list(request, *args, **kwargs)
+
+    def sync(self, request):
+        """Handmatige TenderNed sync (alleen functioneel beheerder)."""
+        from apps.aanbestedingen.tasks import sync_tenderned
+        resultaat = sync_tenderned.delay()
+        return Response({"detail": "Synchronisatie gestart.", "task_id": str(resultaat.id)})

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEigenPakketten } from "@/hooks/use-pakketten-beheer";
+import { useAanbestedingen } from "@/hooks/use-aanbestedingen";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
+import { AanbestedingenDashboardSectie } from "@/components/aanbestedingen/AanbestedingenWidget";
 import type { Pakket } from "@/types";
 
 // ── Labels en kleuren ──────────────────────────────────────────────────────────
@@ -35,8 +37,13 @@ const licentieLabel: Record<string, string> = {
 
 export default function AanbodPage() {
   const { data, isLoading, error } = useEigenPakketten();
+  const { data: aanbestedingenData, isLoading: aanbestedingenLoading } = useAanbestedingen({
+    limit: 5,
+    ordering: "-publicatiedatum",
+  });
 
   const pakketten: Pakket[] = data?.results ?? [];
+  const aanbestedingen = aanbestedingenData?.results ?? [];
 
   return (
     <div className="space-y-6">
@@ -117,6 +124,33 @@ export default function AanbodPage() {
           {pakketten.length} pakket{pakketten.length !== 1 ? "ten" : ""} gevonden
         </p>
       )}
+
+      {/* TenderNed aanbestedingen — relevant voor leveranciers */}
+      <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Relevante aanbestedingen
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Recente ICT-aanbestedingen van Nederlandse gemeenten via TenderNed
+            </p>
+          </div>
+          <a
+            href="https://www.tenderned.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-400 hover:text-primary-500"
+          >
+            TenderNed ↗
+          </a>
+        </div>
+        <AanbestedingenDashboardSectie
+          aanbestedingen={aanbestedingen}
+          isLoading={aanbestedingenLoading}
+          titel=""
+        />
+      </div>
     </div>
   );
 }

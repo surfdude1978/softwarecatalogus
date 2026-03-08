@@ -67,6 +67,9 @@ class Command(BaseCommand):
             self.stdout.write("Stap 9/9: Content en notificaties aanmaken...")
             self._create_content(users)
 
+            self.stdout.write("Stap 10/10: TenderNed aanbestedingen laden...")
+            self._create_aanbestedingen(gemeenten)
+
         self.stdout.write(self.style.SUCCESS("\nSeed data succesvol aangemaakt!"))
         self._print_summary()
 
@@ -1047,6 +1050,48 @@ class Command(BaseCommand):
                 )
 
     # ──────────────────────────────────────────────────────────────
+    # TenderNed aanbestedingen
+    # ──────────────────────────────────────────────────────────────
+
+    def _create_aanbestedingen(self, gemeenten):
+        """Laad demo-aanbestedingen vanuit TenderNed client."""
+        try:
+            from apps.aanbestedingen.client import TenderNedClient
+            from apps.aanbestedingen.models import Aanbesteding
+            from apps.aanbestedingen.tasks import _koppel_organisatie, _koppel_gemma
+
+            client = TenderNedClient(demo_mode=True)
+            aanbestedingen_data = client.haal_ict_aanbestedingen_op()
+
+            for item in aanbestedingen_data:
+                aanbesteding, created = Aanbesteding.objects.get_or_create(
+                    publicatiecode=item["publicatiecode"],
+                    defaults={
+                        "naam": item["naam"][:1000],
+                        "aanbestedende_dienst": item["aanbestedende_dienst"][:500],
+                        "aanbestedende_dienst_stad": (item.get("aanbestedende_dienst_stad") or "")[:255],
+                        "type": item.get("type", "onbekend"),
+                        "status": item.get("status", "aankondiging"),
+                        "procedure": (item.get("procedure") or "")[:200],
+                        "publicatiedatum": item["publicatiedatum"],
+                        "sluitingsdatum": item.get("sluitingsdatum"),
+                        "cpv_codes": item.get("cpv_codes", []),
+                        "cpv_omschrijvingen": item.get("cpv_omschrijvingen", []),
+                        "waarde_geschat": item.get("waarde_geschat"),
+                        "url_tenderned": item.get("url_tenderned", "")[:500],
+                        "omschrijving": item.get("omschrijving", ""),
+                    },
+                )
+                if created:
+                    _koppel_organisatie(aanbesteding)
+                    _koppel_gemma(aanbesteding)
+
+            count = Aanbesteding.objects.count()
+            self.stdout.write(f"  {count} TenderNed aanbestedingen geladen")
+        except Exception as exc:
+            self.stdout.write(self.style.WARNING(f"  Aanbestedingen overgeslagen: {exc}"))
+
+    # ──────────────────────────────────────────────────────────────
     # Samenvatting
     # ──────────────────────────────────────────────────────────────
 
@@ -1073,6 +1118,7 @@ class Command(BaseCommand):
             ("Pagina's", Pagina.objects.count()),
             ("Nieuwsberichten", Nieuwsbericht.objects.count()),
             ("Notificaties", Notificatie.objects.count()),
+            ("Aanbestedingen (TenderNed)", __import__("apps.aanbestedingen.models", fromlist=["Aanbesteding"]).Aanbesteding.objects.count()),
         ]
         for label, count in stats:
             self.stdout.write(f"  {label}: {count}")

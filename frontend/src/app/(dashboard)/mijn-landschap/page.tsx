@@ -7,10 +7,12 @@ import {
   useVoegPakketToe,
   useVerwijderPakketGebruik,
 } from "@/hooks/use-pakketoverzicht";
+import { useRecenteAanbestedingen } from "@/hooks/use-aanbestedingen";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
+import { AanbestedingenDashboardSectie } from "@/components/aanbestedingen/AanbestedingenWidget";
 
 const statusVariant: Record<string, "success" | "warning" | "default"> = {
   in_gebruik: "success",
@@ -28,8 +30,11 @@ export default function MijnLandschapPage() {
   const { data, isLoading, error } = useMijnPakketOverzicht();
   const verwijderMutatie = useVerwijderPakketGebruik();
   const [verwijderConfirm, setVerwijderConfirm] = useState<string | null>(null);
+  const { data: aanbestedingenData, isLoading: aanbestedingenLoading } =
+    useRecenteAanbestedingen(5);
 
   const pakketgebruik = data?.results || [];
+  const aanbestedingen = aanbestedingenData?.results ?? [];
 
   const handleVerwijder = async (id: string) => {
     await verwijderMutatie.mutateAsync(id);
@@ -131,6 +136,33 @@ export default function MijnLandschapPage() {
           ))}
         </div>
       )}
+
+      {/* TenderNed aanbestedingen voor gemeente */}
+      <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Recente ICT-aanbestedingen
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Actuele aanbestedingen van gemeenten — bekijk kansen en trends
+            </p>
+          </div>
+          <a
+            href="https://www.tenderned.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-400 hover:text-primary-500"
+          >
+            TenderNed ↗
+          </a>
+        </div>
+        <AanbestedingenDashboardSectie
+          aanbestedingen={aanbestedingen}
+          isLoading={aanbestedingenLoading}
+          titel=""
+        />
+      </div>
     </div>
   );
 }

@@ -12,6 +12,7 @@ app_name = "api"
 router = DefaultRouter()
 
 # Publieke endpoints
+router.register(r"aanbestedingen", views.AanbestedingenViewSet, basename="aanbesteding")
 router.register(r"pakketten", views.PakketViewSet, basename="pakket")
 router.register(r"organisaties", views.OrganisatieViewSet, basename="organisatie")
 router.register(r"standaarden", views.StandaardViewSet, basename="standaard")

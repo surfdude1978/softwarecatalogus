@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AanbestedingenWidget } from "@/components/aanbestedingen/AanbestedingenWidget";
 
 export default function HomePage() {
   return (
@@ -29,7 +30,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="mt-24 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mt-24 grid gap-8 sm:grid-cols-2 lg:grid-cols-3" aria-label="Functionaliteiten">
         <FeatureCard
           title="Catalogus doorzoeken"
           description="Zoek en filter pakketten op naam, leverancier, standaarden en GEMMA-componenten."
@@ -43,6 +44,24 @@ export default function HomePage() {
           description="Bekijk uw pakketlandschap op de GEMMA-referentiearchitectuur kaart."
         />
       </section>
+
+      {/* TenderNed aanbestedingen widget */}
+      <section className="mt-16" aria-label="Recente ICT-aanbestedingen">
+        <AanbestedingenWidget limit={6} />
+      </section>
+
+      <p className="mt-6 text-center text-xs text-gray-400">
+        Aanbestedingen worden dagelijks gesynchroniseerd vanuit{" "}
+        <a
+          href="https://www.tenderned.nl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-primary-500"
+        >
+          TenderNed
+        </a>
+        . Alleen ICT-gerelateerde aanbestedingen (CPV 48xxx, 72xxx) worden getoond.
+      </p>
     </div>
   );
 }
