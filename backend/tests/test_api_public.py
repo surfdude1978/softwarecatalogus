@@ -19,10 +19,10 @@ class TestPakkettenAPI:
         url = reverse("api:pakket-list")
         response = api_client.get(url)
         assert response.status_code == 200
-        # Publiek ziet actieve + concept pakketten
+        # Publiek ziet ALLEEN actieve pakketten, niet concept (fix #25)
         namen = [p["naam"] for p in response.data["results"]]
         assert "Suite4Gemeenten" in namen
-        assert "NieuwPakket" in namen
+        assert "NieuwPakket" not in namen
 
     def test_pakket_detail(self, api_client, pakket):
         url = reverse("api:pakket-detail", kwargs={"pk": pakket.pk})

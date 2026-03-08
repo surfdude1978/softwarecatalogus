@@ -99,9 +99,10 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # Publieke gebruikers zien alleen actieve en concept-pakketten
+        # Publieke gebruikers zien alleen gepubliceerde (actieve) pakketten
+        # Concept-pakketten zijn intern en nog niet goedgekeurd
         if not self.request.user.is_authenticated or self.request.user.rol == "publiek":
-            qs = qs.filter(status__in=["actief", "concept"])
+            qs = qs.filter(status="actief")
         return qs
 
 

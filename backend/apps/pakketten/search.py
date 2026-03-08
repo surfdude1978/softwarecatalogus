@@ -99,30 +99,34 @@ def remove_pakket(pakket_id):
 
 
 def search_pakketten(query, filters=None, sort=None, offset=0, limit=25):
-    """Zoek pakketten via Meilisearch."""
-    try:
-        index = get_pakketten_index()
-        search_params = {
-            "offset": offset,
-            "limit": limit,
-            "attributesToRetrieve": ["id", "naam", "versie", "status", "beschrijving",
-                                     "leverancier_naam", "licentievorm", "aantal_gebruikers"],
-        }
-        if filters:
-            search_params["filter"] = filters
-        if sort:
-            search_params["sort"] = sort
+    """
+    Zoek pakketten via Meilisearch.
 
-        result = index.search(query, search_params)
-        return {
-            "hits": result["hits"],
-            "total": result["estimatedTotalHits"],
-            "offset": offset,
-            "limit": limit,
-        }
-    except Exception:
-        logger.exception("Meilisearch zoekfout")
-        return {"hits": [], "total": 0, "offset": offset, "limit": limit}
+    Gooit een uitzondering als Meilisearch niet beschikbaar is of de index
+    niet bestaat — de aanroeper (search_views.py) vangt dit op en gebruikt
+    een ORM-fallback.
+    """
+    index = get_pakketten_index()
+    search_params = {
+        "offset": offset,
+        "limit": limit,
+        "attributesToRetrieve": [
+            "id", "naam", "versie", "status", "beschrijving",
+            "leverancier_naam", "licentievorm", "aantal_gebruikers",
+        ],
+    }
+    if filters:
+        search_params["filter"] = filters
+    if sort:
+        search_params["sort"] = sort
+
+    result = index.search(query, search_params)
+    return {
+        "hits": result["hits"],
+        "total": result["estimatedTotalHits"],
+        "offset": offset,
+        "limit": limit,
+    }
 
 
 def reindex_all():

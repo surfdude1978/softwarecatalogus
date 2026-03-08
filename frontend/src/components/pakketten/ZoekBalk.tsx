@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/Input";
 
 interface ZoekBalkProps {
@@ -9,16 +9,31 @@ interface ZoekBalkProps {
   defaultValue?: string;
 }
 
+const DEBOUNCE_MS = 300;
+
 export function ZoekBalk({
   onSearch,
   placeholder = "Zoek pakketten...",
   defaultValue = "",
 }: ZoekBalkProps) {
   const [value, setValue] = useState(defaultValue);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced live search: zoek automatisch na stilstand van 300 ms
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onSearch(value);
+    }, DEBOUNCE_MS);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [value, onSearch]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      if (timerRef.current) clearTimeout(timerRef.current);
       onSearch(value);
     },
     [value, onSearch]
