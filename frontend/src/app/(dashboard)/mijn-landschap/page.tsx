@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   useMijnPakketOverzicht,
-  useVoegPakketToe,
   useVerwijderPakketGebruik,
 } from "@/hooks/use-pakketoverzicht";
 import { useGemeenteAanbestedingen } from "@/hooks/use-aanbestedingen";

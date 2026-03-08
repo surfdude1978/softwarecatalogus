@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -21,6 +21,7 @@ interface ConceptOrg {
 export default function BeheerOrganisatiesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [foutBerichten, setFoutBerichten] = useState<Record<string, string>>({});
 
   const { data: concepten, isLoading } = useQuery({
     queryKey: ["admin-concept-organisaties"],
@@ -33,6 +34,13 @@ export default function BeheerOrganisatiesPage() {
       api.post(`/api/v1/admin/organisaties/${id}/fiatteren/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-concept-organisaties"] });
+    },
+    onError: (err, id) => {
+      const bericht =
+        err instanceof ApiError
+          ? err.getDetail("Fiattering mislukt.")
+          : "Er is een fout opgetreden.";
+      setFoutBerichten((prev) => ({ ...prev, [id]: bericht }));
     },
   });
 
@@ -76,6 +84,11 @@ export default function BeheerOrganisatiesPage() {
                       <Badge variant="info">{org.type_display}</Badge>
                       <Badge variant="warning">Concept</Badge>
                     </div>
+                    {foutBerichten[org.id] && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {foutBerichten[org.id]}
+                      </p>
+                    )}
                   </div>
                   <Button
                     size="sm"

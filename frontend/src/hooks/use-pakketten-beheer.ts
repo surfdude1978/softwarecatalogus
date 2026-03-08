@@ -51,6 +51,10 @@ export function useAanmaakPakket() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
     },
+    onError: () => {
+      // Ververs de lijst zodat de UI consistent blijft bij een mislukte aanmaak
+      queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
+    },
   });
 }
 
@@ -69,6 +73,10 @@ export function useBijwerkPakket(id: string) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
+      queryClient.invalidateQueries({ queryKey: ["pakket", id] });
+    },
+    onError: () => {
+      // Herlaad het pakket zodat formulierdata niet in een inconsistente staat blijft
       queryClient.invalidateQueries({ queryKey: ["pakket", id] });
     },
   });
@@ -106,6 +114,10 @@ export function useStelPakketGemmaIn(pakketId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pakket", pakketId] });
       queryClient.invalidateQueries({ queryKey: ["eigen-pakketten"] });
+    },
+    onError: () => {
+      // Herlaad pakket zodat GEMMA-koppelingen de server-state weerspiegelen
+      queryClient.invalidateQueries({ queryKey: ["pakket", pakketId] });
     },
   });
 }
