@@ -7,7 +7,8 @@ import {
   useVoegPakketToe,
   useVerwijderPakketGebruik,
 } from "@/hooks/use-pakketoverzicht";
-import { useRecenteAanbestedingen } from "@/hooks/use-aanbestedingen";
+import { useGemeenteAanbestedingen } from "@/hooks/use-aanbestedingen";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
@@ -31,8 +32,15 @@ export default function MijnLandschapPage() {
   const { data, isLoading, error } = useMijnPakketOverzicht();
   const verwijderMutatie = useVerwijderPakketGebruik();
   const [verwijderConfirm, setVerwijderConfirm] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  // Strip "gemeente " prefix (hoofdletterongevoelig) voor betere TenderNed-match
+  const gemeenteNaam = (user?.organisatie_naam ?? "")
+    .replace(/^gemeente\s+/i, "")
+    .trim();
+
   const { data: aanbestedingenData, isLoading: aanbestedingenLoading } =
-    useRecenteAanbestedingen(5);
+    useGemeenteAanbestedingen(gemeenteNaam, 5);
 
   const pakketgebruik = data?.results || [];
   const aanbestedingen = aanbestedingenData?.results ?? [];
@@ -146,19 +154,26 @@ export default function MijnLandschapPage() {
         </div>
       )}
 
-      {/* TenderNed aanbestedingen voor gemeente */}
+      {/* TenderNed aanbestedingen — gefilterd op gemeente van gebruiker */}
       <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Recente ICT-aanbestedingen
+              ICT-aanbestedingen
+              {gemeenteNaam && (
+                <span className="ml-2 text-base font-normal text-gray-500">
+                  — {user?.organisatie_naam ?? gemeenteNaam}
+                </span>
+              )}
             </h2>
             <p className="mt-0.5 text-sm text-gray-500">
-              Actuele aanbestedingen van gemeenten — bekijk kansen en trends
+              {gemeenteNaam
+                ? `Actuele aanbestedingen van ${user?.organisatie_naam ?? gemeenteNaam} via TenderNed`
+                : "Actuele ICT-aanbestedingen van Nederlandse gemeenten via TenderNed"}
             </p>
           </div>
           <a
-            href="https://www.tenderned.nl"
+            href={`https://www.tenderned.nl/aankondigingen${gemeenteNaam ? `?query=${encodeURIComponent(gemeenteNaam)}` : ""}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-gray-400 hover:text-primary-500"

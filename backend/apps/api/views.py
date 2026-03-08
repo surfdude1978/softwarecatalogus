@@ -550,6 +550,11 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
     - organisatie: UUID van gekoppelde gemeente
     - publicatiedatum__gte: Datum vanaf (YYYY-MM-DD)
     - publicatiedatum__lte: Datum tot (YYYY-MM-DD)
+    - gemeente: naam van gemeente (fuzzy-match op aanbestedende_dienst)
+    - pakket: UUID van pakket (filtert via GEMMA-componenten van dat pakket)
+    - leverancier: UUID van leverancier (filtert via GEMMA-componenten van hun pakketten)
+    - gemma: naam van GEMMA-component (icontains match)
+    - cpv: specifieke CPV-code
     """
 
     permission_classes = [AllowAny]
@@ -575,7 +580,7 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
             "relevante_pakketten__leverancier",
         ).select_related("organisatie")
 
-        # Filter op gemeente (via organisatie.naam fuzzy-match)
+        # Filter op gemeente (fuzzy-match op aanbestedende_dienst)
         gemeente = self.request.query_params.get("gemeente")
         if gemeente:
             qs = qs.filter(aanbestedende_dienst__icontains=gemeente)
@@ -584,6 +589,45 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         cpv = self.request.query_params.get("cpv")
         if cpv:
             qs = qs.filter(cpv_codes__contains=[cpv])
+
+        # Filter op GEMMA-component naam (directe naam-match)
+        gemma = self.request.query_params.get("gemma")
+        if gemma:
+            qs = qs.filter(gemma_componenten__naam__icontains=gemma).distinct()
+
+        # Filter op pakket-UUID: haal GEMMA-componenten van dat pakket op en
+        # toon aanbestedingen die overeenkomen
+        pakket_id = self.request.query_params.get("pakket")
+        if pakket_id:
+            from apps.pakketten.models import Pakket as PakketModel
+            try:
+                pakket = PakketModel.objects.prefetch_related("gemma_componenten").get(id=pakket_id)
+                gemma_ids = list(pakket.gemma_componenten.values_list("id", flat=True))
+                if gemma_ids:
+                    qs = qs.filter(gemma_componenten__id__in=gemma_ids).distinct()
+                else:
+                    # Pakket heeft geen GEMMA-koppeling: zoek op pakketnaam
+                    qs = qs.filter(naam__icontains=pakket.naam[:60]).distinct()
+            except (PakketModel.DoesNotExist, Exception):
+                qs = qs.none()
+
+        # Filter op leverancier-UUID: toon aanbestedingen die aansluiten bij
+        # de GEMMA-componenten van de pakketten van deze leverancier
+        leverancier_id = self.request.query_params.get("leverancier")
+        if leverancier_id:
+            from apps.pakketten.models import Pakket as PakketModel
+            gemma_ids = list(
+                PakketModel.objects.filter(leverancier_id=leverancier_id)
+                .values_list("gemma_componenten__id", flat=True)
+                .distinct()
+            )
+            # Filter None-waarden (pakketten zonder GEMMA-koppeling geven NULL)
+            gemma_ids = [g for g in gemma_ids if g is not None]
+            if gemma_ids:
+                qs = qs.filter(gemma_componenten__id__in=gemma_ids).distinct()
+            else:
+                # Leverancier heeft nog geen GEMMA-koppelingen: toon recente aanbestedingen
+                pass  # Geen extra filter — toon alles
 
         return qs
 
@@ -596,10 +640,18 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Geeft een gepagineerde lijst van recente ICT-aanbestedingen.
         Standaard: laatste 25 resultaten gesorteerd op publicatiedatum.
+
+        Auto-bootstrap: als de database leeg is, wordt eenmalig gesynchroniseerd
+        vanuit TenderNed (of demo-data indien TENDERNED_DEMO_MODE=True).
         """
-        # Beperk de lijst-view tot 50 resultaten voor de widget
         limit = min(int(request.query_params.get("limit", 25)), 50)
         qs = self.filter_queryset(self.get_queryset())
+
+        # Auto-bootstrap: DB leeg en geen context-filter actief → sync eenmalig
+        context_filters = ("gemeente", "pakket", "leverancier", "gemma", "cpv", "search")
+        if not qs.exists() and not any(request.query_params.get(f) for f in context_filters):
+            self._bootstrap_indien_leeg()
+            qs = self.filter_queryset(self.get_queryset())
 
         if "limit" in request.query_params:
             serializer = self.get_serializer(qs[:limit], many=True)
@@ -609,6 +661,24 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
             })
 
         return super().list(request, *args, **kwargs)
+
+    def _bootstrap_indien_leeg(self):
+        """
+        Synchroniseer TenderNed data eenmalig als de database leeg is.
+        Gebruikt Django cache als mutex om herhaalde calls te voorkomen.
+        """
+        from django.core.cache import cache
+        cache_key = "tenderned_bootstrap_done"
+        if cache.get(cache_key):
+            return
+        # Markeer als bezig (1 uur cooldown ook bij mislukking)
+        cache.set(cache_key, True, timeout=3600)
+        try:
+            from apps.aanbestedingen.tasks import sync_tenderned
+            sync_tenderned(dagen_terug=30, max_resultaten=100)
+            logger.info("TenderNed auto-bootstrap geslaagd")
+        except Exception as exc:
+            logger.warning("TenderNed auto-bootstrap mislukt: %s", exc)
 
     def sync(self, request):
         """Handmatige TenderNed sync (alleen functioneel beheerder)."""

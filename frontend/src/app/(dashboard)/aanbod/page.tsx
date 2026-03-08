@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEigenPakketten } from "@/hooks/use-pakketten-beheer";
-import { useAanbestedingen } from "@/hooks/use-aanbestedingen";
+import { useLeverancierAanbestedingen } from "@/hooks/use-aanbestedingen";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -37,10 +38,12 @@ const licentieLabel: Record<string, string> = {
 
 export default function AanbodPage() {
   const { data, isLoading, error } = useEigenPakketten();
-  const { data: aanbestedingenData, isLoading: aanbestedingenLoading } = useAanbestedingen({
-    limit: 5,
-    ordering: "-publicatiedatum",
-  });
+  const { user } = useAuth();
+
+  // Toon aanbestedingen gefilterd op de GEMMA-componenten van de pakketten
+  // van deze leverancier. De backend doet de GEMMA-lookup op org-niveau.
+  const { data: aanbestedingenData, isLoading: aanbestedingenLoading } =
+    useLeverancierAanbestedingen(user?.organisatie ?? "", 5);
 
   const pakketten: Pakket[] = data?.results ?? [];
   const aanbestedingen = aanbestedingenData?.results ?? [];
@@ -125,7 +128,7 @@ export default function AanbodPage() {
         </p>
       )}
 
-      {/* TenderNed aanbestedingen — relevant voor leveranciers */}
+      {/* TenderNed aanbestedingen — gefilterd op GEMMA-componenten van de pakketten */}
       <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div>
@@ -133,11 +136,11 @@ export default function AanbodPage() {
               Relevante aanbestedingen
             </h2>
             <p className="mt-0.5 text-sm text-gray-500">
-              Recente ICT-aanbestedingen van Nederlandse gemeenten via TenderNed
+              Aanbestedingen die aansluiten bij de GEMMA-componenten van uw pakketten
             </p>
           </div>
           <a
-            href="https://www.tenderned.nl"
+            href="https://www.tenderned.nl/aankondigingen"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-gray-400 hover:text-primary-500"

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePakket } from "@/hooks/use-pakketten";
+import { usePakketAanbestedingen } from "@/hooks/use-aanbestedingen";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import { AanbestedingenDashboardSectie } from "@/components/aanbestedingen/AanbestedingenWidget";
 
 const statusVariant: Record<string, "success" | "warning" | "danger" | "default"> = {
   actief: "success",
@@ -28,6 +30,10 @@ export default function PakketDetailPage({
 }) {
   const { id } = params;
   const { data: pakket, isLoading, error } = usePakket(id);
+  const {
+    data: aanbestedingenData,
+    isLoading: aanbestedingenLoading,
+  } = usePakketAanbestedingen(id);
 
   if (isLoading) {
     return (
@@ -181,6 +187,33 @@ export default function PakketDetailPage({
             </CardContent>
           </Card>
         )}
+
+        {/* Relevante aanbestedingen — gefilterd op GEMMA-componenten van dit pakket */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Relevante aanbestedingen
+              </h2>
+              <p className="mt-0.5 text-sm text-gray-500">
+                Actuele ICT-aanbestedingen gerelateerd aan dit pakket via TenderNed
+              </p>
+            </div>
+            <a
+              href={`https://www.tenderned.nl/aankondigingen?query=${encodeURIComponent(pakket.naam)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-400 hover:text-primary-500"
+            >
+              TenderNed ↗
+            </a>
+          </div>
+          <AanbestedingenDashboardSectie
+            aanbestedingen={aanbestedingenData?.results ?? []}
+            isLoading={aanbestedingenLoading}
+            titel=""
+          />
+        </div>
 
         {/* Gebruikende organisaties */}
         {(pakket as any).gebruikende_organisaties?.length > 0 && (
