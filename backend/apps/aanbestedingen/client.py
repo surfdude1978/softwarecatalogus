@@ -465,22 +465,26 @@ class TenderNedClient:
             or f"https://www.tenderned.nl/aankondigingen/overzicht/{publicatiecode}"
         )
 
+        authority = item.get("authority")
+        if isinstance(authority, dict):
+            authority_naam = authority.get("naam", "")
+            authority_stad = authority.get("stad", "")
+        else:
+            authority_naam = authority or ""
+            authority_stad = ""
+
         return {
             "publicatiecode": str(publicatiecode),
             "naam": item.get("naam") or item.get("title") or item.get("omschrijving", ""),
             "aanbestedende_dienst": (
                 item.get("aanbestedendeDienst")
                 or item.get("aanbestedende_dienst")
-                or item.get("authority", {}).get("naam", "")
-                if isinstance(item.get("authority"), dict)
-                else item.get("authority", "")
+                or authority_naam
             ),
             "aanbestedende_dienst_stad": (
                 item.get("stad")
                 or item.get("city")
-                or item.get("authority", {}).get("stad", "")
-                if isinstance(item.get("authority"), dict)
-                else ""
+                or authority_stad
             ),
             "type": self._map_type(item),
             "status": self._map_status(item),
