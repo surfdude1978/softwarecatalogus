@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useHelp } from "@/hooks/use-help";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -52,6 +54,7 @@ function AuthButton() {
 
 export function Header() {
   const pathname = usePathname();
+  const { toggle } = useHelp();
 
   return (
     <header className="border-b border-gray-200 bg-white">
@@ -86,6 +89,15 @@ export function Header() {
               </Link>
             );
           })}
+          {/* Help-knop */}
+          <button
+            onClick={toggle}
+            aria-label="Help en handleiding openen"
+            title="Help & Handleiding"
+            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </button>
           <AuthButton />
         </div>
       </nav>

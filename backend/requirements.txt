@@ -38,3 +38,6 @@ gunicorn>=22.0,<23.0
 python-decouple>=3.8,<4.0
 django-extensions>=3.2,<4.0
 Pillow>=10.0,<11.0
+
+# AI-assistent (help endpoint) — optioneel, vereist ANTHROPIC_API_KEY
+anthropic>=0.40.0,<1.0

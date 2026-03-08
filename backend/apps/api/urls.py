@@ -6,6 +6,7 @@ from . import views
 from . import search_views as views_search
 from . import export_views
 from . import admin_views
+from . import help_views
 
 app_name = "api"
 
@@ -55,4 +56,6 @@ urlpatterns = [
     path("admin/gemma/importeer/", admin_views.GemmaImportView.as_view(), name="admin-gemma-import"),
     # Admin: Audit log export (alleen functioneel beheerder)
     path("admin/auditlog.csv", export_views.ExportAuditLogCSV.as_view(), name="export-auditlog-csv"),
+    # Help AI-assistent (publiek toegankelijk, rate-limited)
+    path("help/vraag/", help_views.HelpVraagView.as_view(), name="help-vraag"),
 ]
