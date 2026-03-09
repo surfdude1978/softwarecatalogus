@@ -272,7 +272,7 @@ class KoppelingViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return Koppeling.objects.filter(
                 Q(van_pakket_gebruik__organisatie=user.organisatie)
                 | Q(naar_pakket_gebruik__organisatie=user.organisatie)
-            )
+            ).order_by("-gewijzigd_op", "-id")
         return Koppeling.objects.none()
 
 
