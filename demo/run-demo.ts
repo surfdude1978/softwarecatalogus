@@ -38,6 +38,10 @@ import * as s13 from './scenes/13-gemma-beheer';
 import * as s14 from './scenes/14-ameff-import';
 import * as s15 from './scenes/15-api-swagger';
 import * as s16 from './scenes/16-api-live';
+import * as s17 from './scenes/17-registreer-leverancier';
+import * as s18 from './scenes/18-fiattering-volledig';
+import * as s19 from './scenes/19-nieuw-pakket-wijkbeheer';
+import * as s20 from './scenes/20-gemeente-koppelt-gemma';
 
 type Scene = { name: string; title: string; run: (page: Page) => Promise<void> };
 
@@ -47,6 +51,7 @@ const ALL_SCENES: Scene[] = [
   s09, s10,
   s11, s12, s13, s14,
   s15, s16,
+  s17, s18, s19, s20,
 ];
 
 // ── Suites (persona-gerichte video's) ─────────────────────────────────────────
@@ -75,6 +80,12 @@ const SUITES: Record<string, { titel: string; omschrijving: string; scenes: Scen
     omschrijving: 'Organisatiebeheer, GEMMA ArchiMate, AMEFF-import, Swagger, live API',
     scenes:      [s11, s12, s13, s14, s15, s16],
     output:      'swc-demo-vng.mp4',
+  },
+  registratiestroom: {
+    titel:       'Deel F — Volledige registratiestroom (sequentieel)',
+    omschrijving: 'Leverancier registratie → fiattering org+user → pakket aanmaken → gemeente koppelt → GEMMA-kaart. Voer EERST demo-reset.sh uit!',
+    scenes:      [s17, s18, s19, s20],
+    output:      'swc-demo-registratiestroom.mp4',
   },
 };
 

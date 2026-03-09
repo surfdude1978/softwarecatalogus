@@ -8,7 +8,7 @@
 # Op macOS gebruik: --add-host host.docker.internal:host-gateway
 # en zet BASE_URL=http://host.docker.internal in de omgeving.
 
-FROM mcr.microsoft.com/playwright:v1.44.0-jammy
+FROM mcr.microsoft.com/playwright:v1.58.2-jammy
 
 WORKDIR /demo
 

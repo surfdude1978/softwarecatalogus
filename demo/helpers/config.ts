@@ -33,6 +33,14 @@ export const ACCOUNTS = {
     rol: 'Functioneel beheerder',
     org: 'VNG Realisatie',
   },
+  /** Nieuw account aangemaakt tijdens demo-registratiestroom (scène 17–19) */
+  pieter: {
+    email: 'pieter@techsolutions.nl',
+    password: 'Welkom12345!',
+    naam: 'Pieter van Dijk',
+    rol: 'Aanbod-beheerder',
+    org: 'TechSolutions BV',
+  },
 } as const;
 
 /** Pad naar auth-storage-states */
