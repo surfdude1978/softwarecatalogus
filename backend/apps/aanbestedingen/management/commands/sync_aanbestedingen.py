@@ -33,7 +33,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        from apps.aanbestedingen.client import TenderNedClient
+        from django.conf import settings
+
         from apps.aanbestedingen.tasks import sync_tenderned
 
         if options["demo"]:
@@ -43,11 +44,6 @@ class Command(BaseCommand):
             f"Synchroniseren van aanbestedingen (laatste {options['dagen']} dagen, "
             f"max {options['max']})..."
         )
-
-        # Direct uitvoeren (niet via Celery) zodat het synchron werkt in management command
-        from apps.aanbestedingen.client import TenderNedClient
-        import django
-        from django.conf import settings
 
         # Tijdelijk demo-mode overschrijven indien gevraagd
         if options["demo"]:

@@ -13,7 +13,6 @@ Ondersteunde publicatietypes incl. EF25 (vrijwillige ex-post-transparantie).
 """
 import logging
 from datetime import date, timedelta
-from typing import Optional
 
 import requests
 from django.conf import settings
@@ -281,7 +280,7 @@ class TenderNedClient:
 
     BASE_URL = "https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties"
 
-    def __init__(self, demo_mode: bool = False, base_url: Optional[str] = None):
+    def __init__(self, demo_mode: bool = False, base_url: str | None = None):
         # Lees demo_mode uit settings; expliciete parameter heeft voorrang.
         # Fallback False: in productie wordt de echte API gebruikt tenzij
         # TENDERNED_DEMO_MODE=True in .env staat.
