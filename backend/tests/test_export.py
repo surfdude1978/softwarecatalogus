@@ -5,7 +5,6 @@ import io
 import pytest
 from django.urls import reverse
 
-
 pytestmark = pytest.mark.django_db
 
 
@@ -83,6 +82,7 @@ class TestExportPakketOverzichtCSV:
 
     def test_fout_zonder_organisatie(self, api_client, db):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         from apps.gebruikers.models import User
         user = User.objects.create_user(
             email="noorg_csv@test.nl",
@@ -127,6 +127,7 @@ class TestExportPakketOverzichtExcel:
 
     def test_fout_zonder_organisatie(self, api_client, db):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         from apps.gebruikers.models import User
         user = User.objects.create_user(
             email="noorg_excel@test.nl",

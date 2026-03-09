@@ -3,8 +3,7 @@ import pytest
 from django.urls import reverse
 
 from apps.organisaties.models import Organisatie
-from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
-
+from apps.pakketten.models import Koppeling, Pakket, PakketGebruik
 
 pytestmark = pytest.mark.django_db
 
@@ -221,7 +220,15 @@ class TestAdminOrganisatieAPI:
         response = admin_client.post(url)
         assert response.status_code == 400
 
-    def test_organisaties_samenvoegen(self, admin_client, gemeente, gemeente2, gebruik_beheerder, pakket, pakket_gebruik):
+    def test_organisaties_samenvoegen(
+        self,
+        admin_client,
+        gemeente,
+        gemeente2,
+        gebruik_beheerder,
+        pakket,
+        pakket_gebruik,
+    ):
         url = reverse("api:admin-organisatie-samenvoegen")
         data = {
             "bron_id": str(gemeente.pk),

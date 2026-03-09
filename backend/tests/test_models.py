@@ -4,13 +4,11 @@ import uuid
 import pytest
 from django.db import IntegrityError
 
-from apps.gebruikers.models import User, Notificatie
-from apps.organisaties.models import Organisatie, Contactpersoon
-from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
-from apps.standaarden.models import Standaard, PakketStandaard
 from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
-from apps.documenten.models import Document
-
+from apps.gebruikers.models import Notificatie, User
+from apps.organisaties.models import Contactpersoon, Organisatie
+from apps.pakketten.models import Koppeling, Pakket, PakketGebruik
+from apps.standaarden.models import PakketStandaard, Standaard
 
 # ========================
 # BaseModel

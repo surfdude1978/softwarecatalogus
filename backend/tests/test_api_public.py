@@ -2,10 +2,9 @@
 import pytest
 from django.urls import reverse
 
-from apps.pakketten.models import Pakket, PakketGebruik
-from apps.organisaties.models import Organisatie
 from apps.content.models import Pagina
-
+from apps.organisaties.models import Organisatie
+from apps.pakketten.models import Pakket
 
 pytestmark = pytest.mark.django_db
 

@@ -1,19 +1,16 @@
 """Tests voor TenderNed aanbestedingen: client, taken en koppellogica."""
-import pytest
+from datetime import date
 from unittest.mock import MagicMock, patch
-from datetime import date, timedelta
 
+import pytest
 from django.test import override_settings
 
 from apps.aanbestedingen.client import (
+    DEMO_AANBESTEDINGEN,
     TenderNedClient,
     bepaal_gemma_componenten,
-    DEMO_AANBESTEDINGEN,
-    CPV_GEMMA_MAPPING,
-    ICT_CPV_CODES,
 )
 from apps.aanbestedingen.models import Aanbesteding
-
 
 pytestmark = pytest.mark.django_db
 
@@ -487,8 +484,8 @@ class TestSyncTenderned:
             }
         ]
 
-        with patch("apps.aanbestedingen.client.TenderNedClient") as MockClient:
-            MockClient.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
+        with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
+            mock_client.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
             result = sync_tenderned()
 
         assert result["aangemaakt"] == 1
@@ -513,8 +510,8 @@ class TestSyncTenderned:
             }
         ]
 
-        with patch("apps.aanbestedingen.client.TenderNedClient") as MockClient:
-            MockClient.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
+        with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
+            mock_client.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
             result = sync_tenderned()
 
         assert result["bijgewerkt"] == 1
@@ -528,18 +525,19 @@ class TestSyncTenderned:
         # Geen publicatiecode → verwerking faalt
         demo_data = [{"naam": "Ongeldige aanbesteding"}]
 
-        with patch("apps.aanbestedingen.client.TenderNedClient") as MockClient:
-            MockClient.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
+        with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
+            mock_client.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
             result = sync_tenderned()
 
         assert result["fouten"] == 1
 
     def test_sync_herprobeert_bij_api_fout(self, db):
-        from apps.aanbestedingen.tasks import sync_tenderned
         import requests as req_lib
 
-        with patch("apps.aanbestedingen.client.TenderNedClient") as MockClient:
-            MockClient.return_value.haal_ict_aanbestedingen_op.side_effect = (
+        from apps.aanbestedingen.tasks import sync_tenderned
+
+        with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
+            mock_client.return_value.haal_ict_aanbestedingen_op.side_effect = (
                 req_lib.RequestException("Timeout")
             )
             with pytest.raises(Exception):  # Celery retry raises
@@ -564,8 +562,8 @@ class TestSyncTenderned:
             }
         ]
 
-        with patch("apps.aanbestedingen.client.TenderNedClient") as MockClient:
-            MockClient.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
+        with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
+            mock_client.return_value.haal_ict_aanbestedingen_op.return_value = demo_data
             sync_tenderned()
 
         aanbesteding = Aanbesteding.objects.get(publicatiecode="ORG-KOPPEL-001")

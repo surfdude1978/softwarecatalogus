@@ -1,11 +1,10 @@
 """Tests voor ArchiMate AMEFF import en export."""
 import pytest
 
-from apps.architectuur.ameff_import import parse_ameff, import_ameff
 from apps.architectuur.ameff_export import generate_ameff
+from apps.architectuur.ameff_import import import_ameff, parse_ameff
 from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
 from apps.pakketten.models import PakketGebruik
-
 
 pytestmark = pytest.mark.django_db
 

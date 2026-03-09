@@ -1,10 +1,10 @@
 """Tests voor zoek- en export-views."""
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from django.urls import reverse
 
-from apps.pakketten.models import Pakket, PakketGebruik
-
+from apps.pakketten.models import Pakket
 
 pytestmark = pytest.mark.django_db
 

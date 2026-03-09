@@ -138,7 +138,7 @@ export function HelpDrawer() {
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-white/80" />
             <span className="text-sm font-semibold text-white">
-              Help & Handleiding
+              Help &amp; Handleiding
             </span>
           </div>
           <button
@@ -277,7 +277,7 @@ export function HelpDrawer() {
                 <div className="rounded-lg bg-gray-50 p-4 text-center">
                   <p className="text-xs text-gray-500">
                     Geen resultaten gevonden voor{" "}
-                    <strong className="text-gray-700">"{zoekTerm}"</strong>.
+                    <strong className="text-gray-700">&quot;{zoekTerm}&quot;</strong>.
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
                     Probeer de AI-assistent voor een directe vraag.

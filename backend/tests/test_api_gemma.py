@@ -2,7 +2,7 @@
 import pytest
 from django.urls import reverse
 
-from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
+from apps.architectuur.models import PakketGemmaComponent
 from apps.pakketten.models import PakketGebruik
 
 pytestmark = pytest.mark.django_db

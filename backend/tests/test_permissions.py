@@ -1,18 +1,17 @@
 """Tests voor custom permission classes."""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from apps.api.permissions import (
     IsAanbodBeheerder,
-    IsGebruikBeheerder,
-    IsFunctioneelBeheerder,
     IsEigenOrganisatie,
     IsFullyAuthenticated,
     IsFullyAuthenticatedOrReadOnly,
+    IsFunctioneelBeheerder,
+    IsGebruikBeheerder,
     IsTOTPPending,
 )
-from apps.gebruikers.models import User
-
 
 pytestmark = pytest.mark.django_db
 

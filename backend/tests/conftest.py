@@ -3,14 +3,12 @@ import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.architectuur.models import GemmaComponent
+from apps.content.models import Nieuwsbericht, Pagina
 from apps.gebruikers.models import User
-from apps.organisaties.models import Organisatie, Contactpersoon
-from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
-from apps.standaarden.models import Standaard, PakketStandaard
-from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
-from apps.documenten.models import Document
-from apps.content.models import Pagina, Nieuwsbericht
-
+from apps.organisaties.models import Organisatie
+from apps.pakketten.models import Pakket, PakketGebruik
+from apps.standaarden.models import Standaard
 
 # ========================
 # Organisaties
