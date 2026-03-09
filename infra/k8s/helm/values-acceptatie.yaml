@@ -1,0 +1,78 @@
+# ============================================================
+# OTAP: ACCEPTATIE omgeving
+# Doel: functionele acceptatietests door klant/PO, productie-like
+# ============================================================
+
+backend:
+  replicaCount: 1
+  env:
+    DJANGO_SETTINGS_MODULE: config.settings.production
+    ALLOWED_HOSTS: acceptatie.softwarecatalogus.vngrealisatie.nl,localhost
+    TENDERNED_DEMO_MODE: "True"
+    DEBUG: "False"
+  resources:
+    limits:
+      cpu: 400m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 1
+  env:
+    NEXT_PUBLIC_API_URL: https://acceptatie.softwarecatalogus.vngrealisatie.nl
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 75m
+      memory: 128Mi
+
+celeryWorker:
+  replicaCount: 1
+
+celeryBeat:
+  replicaCount: 1
+
+postgresql:
+  primary:
+    persistence:
+      size: 10Gi
+
+meilisearch:
+  persistence:
+    size: 5Gi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: acceptatie.softwarecatalogus.vngrealisatie.nl
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /admin
+          pathType: Prefix
+          service: backend
+        - path: /static
+          pathType: Prefix
+          service: backend
+        - path: /media
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: softwarecatalogus-acceptatie-tls
+      hosts:
+        - acceptatie.softwarecatalogus.vngrealisatie.nl
+
+# Geen geautomatiseerde testdata in acceptatie — data handmatig beheren
+seedData:
+  enabled: false

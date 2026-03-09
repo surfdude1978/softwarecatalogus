@@ -155,8 +155,12 @@ jobs:
         include:
           - context: backend
             image: softwarecatalogus-backend
+            dockerfile: backend/Dockerfile
           - context: frontend
             image: softwarecatalogus-frontend
+            # Gebruik Dockerfile.prod voor productie-waardige image (multi-stage build).
+            # De bestaande frontend/Dockerfile blijft ongewijzigd voor docker-compose dev.
+            dockerfile: frontend/Dockerfile.prod
 
     steps:
       - uses: actions/checkout@v4
@@ -185,6 +189,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -1,0 +1,91 @@
+# ============================================================
+# OTAP: PRODUCTIE omgeving
+# Doel: live omgeving voor Nederlandse gemeenten en leveranciers
+# ============================================================
+
+backend:
+  replicaCount: 2
+  env:
+    DJANGO_SETTINGS_MODULE: config.settings.production
+    ALLOWED_HOSTS: softwarecatalogus.vngrealisatie.nl,www.softwarecatalogus.vngrealisatie.nl,localhost
+    TENDERNED_DEMO_MODE: "False"
+    DEBUG: "False"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 2
+  env:
+    NEXT_PUBLIC_API_URL: https://softwarecatalogus.vngrealisatie.nl
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+celeryWorker:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+celeryBeat:
+  replicaCount: 1
+
+postgresql:
+  primary:
+    persistence:
+      size: 50Gi
+
+meilisearch:
+  persistence:
+    size: 20Gi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: softwarecatalogus.vngrealisatie.nl
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /admin
+          pathType: Prefix
+          service: backend
+        - path: /static
+          pathType: Prefix
+          service: backend
+        - path: /media
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: softwarecatalogus-productie-tls
+      hosts:
+        - softwarecatalogus.vngrealisatie.nl
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Nooit testdata inladen in productie
+seedData:
+  enabled: false
