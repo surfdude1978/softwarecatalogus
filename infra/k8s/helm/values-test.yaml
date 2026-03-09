@@ -1,0 +1,93 @@
+# ============================================================
+# OTAP: TEST omgeving
+# Doel: reviewen door klant, met voorgeladen testdata
+# ============================================================
+
+backend:
+  replicaCount: 1
+  env:
+    DJANGO_SETTINGS_MODULE: config.settings.production
+    ALLOWED_HOSTS: test.softwarecatalogus.vngrealisatie.nl,localhost
+    TENDERNED_DEMO_MODE: "True"
+    DEBUG: "False"
+  resources:
+    limits:
+      cpu: 300m
+      memory: 384Mi
+    requests:
+      cpu: 100m
+      memory: 192Mi
+
+frontend:
+  replicaCount: 1
+  env:
+    NEXT_PUBLIC_API_URL: https://test.softwarecatalogus.vngrealisatie.nl
+  resources:
+    limits:
+      cpu: 200m
+      memory: 192Mi
+    requests:
+      cpu: 50m
+      memory: 96Mi
+
+celeryWorker:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+celeryBeat:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+
+meilisearch:
+  persistence:
+    size: 2Gi
+
+ingress:
+  annotations:
+    # Let's Encrypt staging voorkomt rate-limiting tijdens testen
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: test.softwarecatalogus.vngrealisatie.nl
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /admin
+          pathType: Prefix
+          service: backend
+        - path: /static
+          pathType: Prefix
+          service: backend
+        - path: /media
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: softwarecatalogus-test-tls
+      hosts:
+        - test.softwarecatalogus.vngrealisatie.nl
+
+# Testdata wordt ingeladen na elke deploy (seed_data --clear)
+seedData:
+  enabled: true

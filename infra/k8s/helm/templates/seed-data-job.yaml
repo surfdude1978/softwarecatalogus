@@ -1,0 +1,95 @@
+{{- if .Values.seedData.enabled }}
+# Laadt testdata na elke install/upgrade in de test-omgeving.
+# Wordt ALLEEN uitgevoerd als seedData.enabled=true (zie values-test.yaml).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "softwarecatalogus.fullname" . }}-seed-data
+  labels:
+    app.kubernetes.io/component: seed-data
+    {{- include "softwarecatalogus.labels" . | nindent 4 }}
+  annotations:
+    # Draai na elke Helm install én upgrade
+    "helm.sh/hook": post-install,post-upgrade
+    # Hogere weight = na migrate initContainer van de deployment
+    "helm.sh/hook-weight": "5"
+    # Verwijder vorige Job vóór nieuwe run (voorkomt naamconflict)
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  # Bij fout: niet opnieuw proberen
+  backoffLimit: 0
+  # Verwijder Job automatisch 10 minuten na voltooiing
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: seed-data
+        {{- include "softwarecatalogus.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        # Wacht tot de database klaar is met migreren
+        - name: wacht-op-migrate
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          command:
+            - python
+            - manage.py
+            - migrate
+            - --no-input
+          env:
+            {{- range $key, $value := .Values.backend.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- if .Values.backend.envFromSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.backend.envFromSecret }}
+          {{- end }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: seed-data
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          command:
+            - python
+            - manage.py
+            - seed_data
+            - --clear
+          env:
+            {{- range $key, $value := .Values.backend.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- if .Values.backend.envFromSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.backend.envFromSecret }}
+          {{- end }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}
