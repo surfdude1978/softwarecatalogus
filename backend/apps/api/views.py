@@ -173,7 +173,7 @@ class OrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["create"]:
-            return [IsAuthenticated()]
+            return [AllowAny()]  # Zelfregistratie is publiek; org krijgt concept-status
         if self.action in ["update", "partial_update", "destroy"]:
             return [IsFunctioneelBeheerder()]
         return [AllowAny()]

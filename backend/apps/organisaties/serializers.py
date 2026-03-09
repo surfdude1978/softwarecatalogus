@@ -48,12 +48,15 @@ class OrganisatieCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organisatie
         fields = [
-            "naam", "type", "oin", "bevoegd_gezag_code",
+            "id", "naam", "type", "oin", "bevoegd_gezag_code",
             "website", "beschrijving",
         ]
+        read_only_fields = ["id"]
 
     def create(self, validated_data):
         user = self.context["request"].user
-        validated_data["geregistreerd_door"] = user
+        # Zelfregistratie kan anoniem zijn; in dat geval blijft geregistreerd_door None
+        if user and user.is_authenticated:
+            validated_data["geregistreerd_door"] = user
         validated_data["status"] = Organisatie.Status.CONCEPT
         return super().create(validated_data)
