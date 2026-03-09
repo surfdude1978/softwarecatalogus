@@ -1,6 +1,10 @@
 """Tests voor beveiligde API endpoints (beheerders)."""
+from datetime import timedelta
+
 import pytest
+from django.core.paginator import UnorderedObjectListWarning
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.organisaties.models import Organisatie
 from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
@@ -150,6 +154,42 @@ class TestKoppelingenAPI:
         response = auth_client.get(url)
         assert response.status_code == 200
         assert len(response.data["results"]) >= 1
+
+    def test_koppeling_lijst_heeft_deterministische_sortering(self, auth_client, pakket_gebruik, pakket_gebruik2):
+        oudere = Koppeling.objects.create(
+            van_pakket_gebruik=pakket_gebruik,
+            naar_pakket_gebruik=pakket_gebruik2,
+            type="api",
+        )
+        nieuwere = Koppeling.objects.create(
+            van_pakket_gebruik=pakket_gebruik2,
+            naar_pakket_gebruik=pakket_gebruik,
+            type="bestand",
+        )
+
+        nu = timezone.now()
+        Koppeling.objects.filter(pk=oudere.pk).update(gewijzigd_op=nu - timedelta(days=1))
+        Koppeling.objects.filter(pk=nieuwere.pk).update(gewijzigd_op=nu)
+
+        url = reverse("api:koppeling-list")
+        response = auth_client.get(url)
+
+        assert response.status_code == 200
+        ids = [item["id"] for item in response.data["results"]]
+        assert ids.index(str(nieuwere.pk)) < ids.index(str(oudere.pk))
+
+    def test_koppeling_lijst_geen_unordered_warning(self, auth_client, pakket_gebruik, pakket_gebruik2, recwarn):
+        Koppeling.objects.create(
+            van_pakket_gebruik=pakket_gebruik,
+            naar_pakket_gebruik=pakket_gebruik2,
+            type="api",
+        )
+
+        url = reverse("api:koppeling-list")
+        response = auth_client.get(url)
+
+        assert response.status_code == 200
+        assert not [w for w in recwarn if issubclass(w.category, UnorderedObjectListWarning)]
 
 
 # ========================
