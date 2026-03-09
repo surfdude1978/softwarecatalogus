@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePakket } from "@/hooks/use-pakketten";
 import { usePakketAanbestedingen } from "@/hooks/use-aanbestedingen";
+import { useVoegPakketToe } from "@/hooks/use-pakketoverzicht";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Spinner } from "@/components/ui/Spinner";
@@ -35,6 +38,20 @@ export default function PakketDetailPage({
     isLoading: aanbestedingenLoading,
   } = usePakketAanbestedingen(id);
 
+  const { user } = useAuth();
+  const voegToe = useVoegPakketToe();
+  const [toevoegenStatus, setToevoegenStatus] = useState<"idle" | "success" | "error">("idle");
+
+  async function handleToevoegen() {
+    if (!pakket) return;
+    try {
+      await voegToe.mutateAsync({ pakket: pakket.id, status: "in_gebruik" });
+      setToevoegenStatus("success");
+    } catch {
+      setToevoegenStatus("error");
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
@@ -64,7 +81,7 @@ export default function PakketDetailPage({
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               {pakket.naam}
@@ -78,9 +95,34 @@ export default function PakketDetailPage({
               {pakket.leverancier?.naam || "Onbekende leverancier"}
             </p>
           </div>
-          <Badge variant={statusVariant[pakket.status] || "default"} className="text-sm">
-            {pakket.status}
-          </Badge>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <Badge variant={statusVariant[pakket.status] || "default"} className="text-sm">
+              {pakket.status}
+            </Badge>
+            {/* Knop zichtbaar voor ingelogde gebruik-beheerders */}
+            {user?.rol === "gebruik_beheerder" && (
+              <div className="text-right">
+                {toevoegenStatus === "success" ? (
+                  <span className="text-sm font-medium text-green-600">
+                    ✓ Toegevoegd aan uw landschap
+                  </span>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={handleToevoegen}
+                    disabled={voegToe.isPending}
+                  >
+                    {voegToe.isPending ? "Toevoegen…" : "+ Aan mijn landschap"}
+                  </Button>
+                )}
+                {toevoegenStatus === "error" && (
+                  <p className="mt-1 text-xs text-red-600">
+                    Al in uw landschap, of pakket niet beschikbaar.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Beschrijving */}
