@@ -193,8 +193,8 @@ export function HelpAI({ paginaContext }: HelpAIProps) {
       {/* Hulptekst */}
       {berichten.length === 0 && !aiNietBeschikbaar && (
         <p className="mt-2 text-[10px] text-gray-400">
-          Bijv: "Hoe voeg ik een pakket toe?" of "Wat is het verschil tussen
-          gebruik-beheerder en raadpleger?"
+          Bijv: &quot;Hoe voeg ik een pakket toe?&quot; of &quot;Wat is het verschil
+          tussen gebruik-beheerder en raadpleger?&quot;
         </p>
       )}
     </div>

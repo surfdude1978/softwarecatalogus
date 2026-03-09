@@ -1,10 +1,9 @@
 """Tests voor audit logging (issue #8/#16)."""
+
 import pytest
 from django.urls import reverse
-from unittest.mock import patch
 
-from apps.core.audit import AuditLog, log_actie, _get_ip, _get_object_info
-
+from apps.core.audit import AuditLog, log_actie
 
 pytestmark = pytest.mark.django_db
 

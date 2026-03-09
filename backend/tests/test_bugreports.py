@@ -1,7 +1,8 @@
 """Tests voor bugfixes #24 (zoeken werkt niet) en #25 (concept pakketten publiek zichtbaar)."""
+from unittest.mock import MagicMock, patch
+
 import pytest
 from django.urls import reverse
-from unittest.mock import patch, MagicMock
 
 pytestmark = pytest.mark.django_db
 

@@ -4,7 +4,6 @@ from django.urls import reverse
 
 from apps.gebruikers.models import User
 
-
 pytestmark = pytest.mark.django_db
 
 
@@ -220,7 +219,7 @@ class TestTOTPBypassPrevention:
 
     def test_normaal_token_heeft_geen_totp_pending_claim(self, api_client, gebruik_beheerder):
         """Een normaal login token bevat géén totp_pending claim."""
-        from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+        from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
         refresh = RefreshToken.for_user(gebruik_beheerder)
         access_token = AccessToken(str(refresh.access_token))
         assert "totp_pending" not in access_token or not access_token.get("totp_pending", False)

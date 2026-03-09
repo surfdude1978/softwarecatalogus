@@ -3,7 +3,6 @@ import pytest
 from django.test import override_settings
 from django.urls import reverse
 
-
 pytestmark = pytest.mark.django_db
 
 
