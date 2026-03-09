@@ -82,8 +82,8 @@ def _get_ip(request) -> str | None:
     """Haal het IP-adres op van de request (proxy-aware)."""
     xff = request.META.get("HTTP_X_FORWARDED_FOR")
     if xff:
-        return xff.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
+        return xff.split(",")[0].strip()  # type: ignore[no-any-return]
+    return request.META.get("REMOTE_ADDR")  # type: ignore[no-any-return]
 
 
 def _get_object_info(instance) -> tuple[str, str, str]:

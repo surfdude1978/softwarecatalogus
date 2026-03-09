@@ -32,7 +32,7 @@ def _stel_auth_cookies_in(response, access_token: str, refresh_token: str) -> No
     response.set_cookie(
         key=getattr(settings, "JWT_AUTH_COOKIE", "swc_access"),
         value=access_token,
-        max_age=int(access_lifetime.total_seconds()) if access_lifetime else 1800,
+        max_age=int(access_lifetime.total_seconds()) if access_lifetime else 1800,  # type: ignore[attr-defined]
         httponly=True,
         secure=secure,
         samesite=samesite,
@@ -41,7 +41,7 @@ def _stel_auth_cookies_in(response, access_token: str, refresh_token: str) -> No
     response.set_cookie(
         key=getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh"),
         value=refresh_token,
-        max_age=int(refresh_lifetime.total_seconds()) if refresh_lifetime else 86400,
+        max_age=int(refresh_lifetime.total_seconds()) if refresh_lifetime else 86400,  # type: ignore[attr-defined]
         httponly=True,
         secure=secure,
         samesite=samesite,

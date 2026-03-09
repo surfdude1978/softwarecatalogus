@@ -71,7 +71,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     update: Pakket bijwerken (aanbod-beheerder).
     """
 
-    queryset = Pakket.objects.select_related("leverancier").annotate(
+    queryset = Pakket.objects.select_related("leverancier").annotate(  # type: ignore[no-redef]
         aantal_gebruikers=Count(
             "pakketgebruik",
             filter=Q(pakketgebruik__status="in_gebruik"),

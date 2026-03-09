@@ -307,7 +307,7 @@ class TenderNedClient:
         """
         if self.demo_mode:
             logger.info("TenderNed demo-modus: voorbeelddata teruggeven")
-            return DEMO_AANBESTEDINGEN[:max_resultaten]
+            return DEMO_AANBESTEDINGEN[:max_resultaten]  # type: ignore[return-value]
 
         return self._haal_van_api(dagen_terug, max_resultaten)
 
@@ -320,7 +320,7 @@ class TenderNedClient:
         - datumVanaf=YYYY-MM-DD
         - page en size voor paginatie
         """
-        resultaten = []
+        resultaten: list[dict] = []
         pagina = 0
         pagina_grootte = 25
 
@@ -401,7 +401,7 @@ class TenderNedClient:
                 },
             )
             response.raise_for_status()
-            return response.json()
+            return response.json()  # type: ignore[no-any-return]
         except requests.RequestException as exc:
             logger.debug("Detail ophalen mislukt voor %s: %s", publicatie_id, exc)
             return fallback

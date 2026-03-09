@@ -74,7 +74,7 @@ class AanbestedingenAdmin(admin.ModelAdmin):
     def naam_kort(self, obj):
         return obj.naam[:60] + "…" if len(obj.naam) > 60 else obj.naam
 
-    naam_kort.short_description = "Naam"
+    naam_kort.short_description = "Naam"  # type: ignore[attr-defined]
 
     def status_badge(self, obj):
         kleuren = {
@@ -91,7 +91,7 @@ class AanbestedingenAdmin(admin.ModelAdmin):
             obj.get_status_display(),
         )
 
-    status_badge.short_description = "Type"
+    status_badge.short_description = "Type"  # type: ignore[attr-defined]
 
     def tenderned_link(self, obj):
         if obj.url_tenderned:
@@ -101,7 +101,7 @@ class AanbestedingenAdmin(admin.ModelAdmin):
             )
         return "—"
 
-    tenderned_link.short_description = "TenderNed"
+    tenderned_link.short_description = "TenderNed"  # type: ignore[attr-defined]
 
     actions = ["herbereken_gemma_koppelingen"]
 

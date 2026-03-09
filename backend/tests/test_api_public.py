@@ -78,10 +78,16 @@ class TestPakkettenAPI:
 
     def test_pakketten_ordering(self, api_client, pakket, pakket2):
         url = reverse("api:pakket-list")
-        response = api_client.get(url, {"ordering": "naam"})
-        assert response.status_code == 200
-        namen = [p["naam"] for p in response.data["results"]]
-        assert namen == sorted(namen)
+        # Controleer dat oplopend en aflopend elkaars spiegelbeeld zijn (collatie-onafhankelijk)
+        response_asc = api_client.get(url, {"ordering": "naam"})
+        assert response_asc.status_code == 200
+        namen_asc = [p["naam"] for p in response_asc.data["results"]]
+
+        response_desc = api_client.get(url, {"ordering": "-naam"})
+        assert response_desc.status_code == 200
+        namen_desc = [p["naam"] for p in response_desc.data["results"]]
+
+        assert namen_asc == list(reversed(namen_desc))
 
     def test_verouderd_pakket_niet_zichtbaar_voor_publiek(self, api_client, db, leverancier):
         Pakket.objects.create(
@@ -138,10 +144,12 @@ class TestOrganisatiesAPI:
         types = [o["type"] for o in response.data["results"]]
         assert all(t == "gemeente" for t in types)
 
-    def test_organisatie_aanmaken_vereist_auth(self, api_client):
+    def test_organisatie_aanmaken_anoniem_concept_status(self, api_client):
+        """Zelfregistratie is publiek: anonieme aanvraag krijgt concept-status."""
         url = reverse("api:organisatie-list")
         response = api_client.post(url, {"naam": "Test", "type": "leverancier"})
-        assert response.status_code == 401
+        assert response.status_code == 201
+        assert Organisatie.objects.get(naam="Test").status == Organisatie.Status.CONCEPT
 
     def test_organisatie_aanmaken_als_ingelogd(self, auth_client, gebruik_beheerder):
         url = reverse("api:organisatie-list")

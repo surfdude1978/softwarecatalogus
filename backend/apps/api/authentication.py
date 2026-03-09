@@ -57,7 +57,7 @@ class OptionalJWTAuthentication(JWTAuthentication):
             cookie_naam = getattr(settings, "JWT_AUTH_COOKIE", "swc_access")
             cookie_waarde = request.COOKIES.get(cookie_naam)
             if cookie_waarde:
-                return cookie_waarde.encode("utf-8")
+                return cookie_waarde.encode("utf-8")  # type: ignore[no-any-return]
 
         header = self.get_header(request)
         if header is None:
