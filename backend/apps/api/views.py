@@ -69,6 +69,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     retrieve: Details van een specifiek pakket.
     create: Nieuw pakket registreren (aanbod-beheerder).
     update: Pakket bijwerken (aanbod-beheerder).
+    fiatteren: Activeer een concept-pakket (functioneel_beheerder).
     """
 
     queryset = Pakket.objects.select_related("leverancier").annotate(  # type: ignore[no-redef]
@@ -100,15 +101,40 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy", "stel_gemma_in"]:
             return [IsAanbodBeheerder()]
+        if self.action == "fiatteren":
+            return [IsFunctioneelBeheerder()]
         return [AllowAny()]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # Publieke gebruikers zien alleen gepubliceerde (actieve) pakketten
-        # Concept-pakketten zijn intern en nog niet goedgekeurd
-        if not self.request.user.is_authenticated or self.request.user.rol == "publiek":
+        user = self.request.user
+        # Concept-pakketten zijn alleen zichtbaar voor functioneel_beheerder en
+        # de eigen aanbod-beheerder (via leverancier); publiek en gebruik-beheerders
+        # zien uitsluitend actieve pakketten.
+        if not user.is_authenticated or user.rol in ("publiek",):
+            qs = qs.filter(status="actief")
+        elif user.rol not in ("functioneel_beheerder", "aanbod_beheerder"):
             qs = qs.filter(status="actief")
         return qs
+
+    @action(detail=True, methods=["post"])
+    def fiatteren(self, request, pk=None):
+        """Activeer een concept-pakket na controle door de functioneel beheerder."""
+        pakket = self.get_object()
+        if pakket.status != Pakket.Status.CONCEPT:
+            return Response(
+                {"detail": "Alleen concept-pakketten kunnen worden gefiatteerd."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        pakket.status = Pakket.Status.ACTIEF
+        pakket.save(update_fields=["status", "gewijzigd_op"])
+        log_actie(
+            request,
+            AuditLog.Actie.GEFIATEERD,
+            instance=pakket,
+            extra={"vorige_status": "concept"},
+        )
+        return Response(PakketDetailSerializer(pakket, context={"request": request}).data)
 
     @action(detail=True, methods=["get", "put"], url_path="gemma-componenten", url_name="gemma-componenten")
     def stel_gemma_in(self, request, pk=None):

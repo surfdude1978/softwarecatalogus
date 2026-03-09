@@ -27,6 +27,11 @@ const navItems = [
     roles: ["functioneel_beheerder"],
   },
   {
+    href: "/beheer/pakketten",
+    label: "Pakketbeheer",
+    roles: ["functioneel_beheerder"],
+  },
+  {
     href: "/beheer/gemma",
     label: "GEMMA beheer",
     roles: ["functioneel_beheerder"],
