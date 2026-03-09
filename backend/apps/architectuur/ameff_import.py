@@ -50,7 +50,7 @@ def parse_ameff(file_content):
             xsi_type = xsi_type.split(":")[-1] if ":" in xsi_type else xsi_type
 
             identifier = elem.get("identifier", "")
-            name_elem = elem.find(".//{%s}name" % NAMESPACES.get("archimate", "*"))
+            name_elem = elem.find(f".//{{{NAMESPACES.get('archimate', '*')}}}name")
             if name_elem is None:
                 # Try without namespace
                 name_elem = elem.find(".//name")
@@ -62,7 +62,7 @@ def parse_ameff(file_content):
                 # Fallback: try 'name' attribute
                 name = elem.get("name", "")
 
-            doc_elem = elem.find(".//{%s}documentation" % NAMESPACES.get("archimate", "*"))
+            doc_elem = elem.find(f".//{{{NAMESPACES.get('archimate', '*')}}}documentation")
             if doc_elem is None:
                 doc_elem = elem.find(".//documentation")
             documentation = doc_elem.text if doc_elem is not None else ""

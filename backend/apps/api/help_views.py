@@ -89,9 +89,9 @@ class HelpVraagView(APIView):
 
         systeem_prompt = f"""Je bent een behulpzame helpdesk-assistent voor de Softwarecatalogus van VNG Realisatie.
 
-De Softwarecatalogus is een platform voor Nederlandse gemeenten, samenwerkingsverbanden en leveranciers om software-applicaties te registreren, vergelijken en raadplegen.
+De Softwarecatalogus is een platform voor Nederlandse gemeenten, samenwerkingsverbanden en leveranciers om software-applicaties te registreren, vergelijken en raadplegen.  # noqa: E501
 
-Beantwoord vragen bondig, concreet en in het Nederlands. Gebruik eenvoudige stap-voor-stap instructies waar van toepassing.
+Beantwoord vragen bondig, concreet en in het Nederlands. Gebruik eenvoudige stap-voor-stap instructies waar van toepassing.  # noqa: E501
 Verwijs naar specifieke onderdelen van de handleiding (sectienummers of titels) als dat helpt.
 Als je iets niet weet op basis van de handleiding, zeg dat dan eerlijk.
 

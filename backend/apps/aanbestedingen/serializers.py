@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from apps.architectuur.serializers import GemmaComponentListSerializer
 from apps.organisaties.serializers import OrganisatieListSerializer
+
 from .models import Aanbesteding
 
 

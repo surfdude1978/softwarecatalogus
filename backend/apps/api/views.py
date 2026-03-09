@@ -1,58 +1,59 @@
 """API ViewSets voor de Softwarecatalogus."""
-from django.db.models import Count, Q
-from rest_framework import viewsets, status, filters
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from apps.api.permissions import IsFullyAuthenticated  # noqa: E402 – na rest_framework imports
-from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
+import logging
 
-from apps.organisaties.models import Organisatie, Contactpersoon
-from apps.organisaties.serializers import (
-    OrganisatieListSerializer,
-    OrganisatieDetailSerializer,
-    OrganisatieCreateSerializer,
-    ContactpersoonSerializer,
-)
-from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
-from apps.pakketten.serializers import (
-    PakketListSerializer,
-    PakketDetailSerializer,
-    PakketCreateUpdateSerializer,
-    PakketGebruikSerializer,
-    KoppelingSerializer,
-)
-from apps.standaarden.models import Standaard
-from apps.standaarden.serializers import StandaardSerializer
-from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
-from apps.architectuur.serializers import (
-    GemmaComponentListSerializer,
-    GemmaComponentDetailSerializer,
-    GemmaKaartComponentSerializer,
-)
-from apps.documenten.models import Document
-from apps.documenten.serializers import DocumentSerializer
-from apps.content.models import Nieuwsbericht, Pagina
-from apps.content.serializers import (
-    NieuwsberichtListSerializer,
-    NieuwsberichtDetailSerializer,
-    PaginaSerializer,
-)
-from apps.gebruikers.models import Notificatie, User
-from apps.gebruikers.serializers import (
-    UserProfileSerializer,
-    NotificatieSerializer,
-)
+from django.db.models import Count, Q
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 
 from apps.aanbestedingen.models import Aanbesteding
 from apps.aanbestedingen.serializers import (
-    AanbestedingenListSerializer,
     AanbestedingenDetailSerializer,
+    AanbestedingenListSerializer,
 )
+from apps.api.permissions import IsFullyAuthenticated  # noqa: E402 – na rest_framework imports
+from apps.architectuur.models import GemmaComponent, PakketGemmaComponent
+from apps.architectuur.serializers import (
+    GemmaComponentDetailSerializer,
+    GemmaComponentListSerializer,
+    GemmaKaartComponentSerializer,
+)
+from apps.content.models import Nieuwsbericht, Pagina
+from apps.content.serializers import (
+    NieuwsberichtDetailSerializer,
+    NieuwsberichtListSerializer,
+    PaginaSerializer,
+)
+from apps.core.audit import AuditLog, AuditLogMixin, log_actie
+from apps.documenten.models import Document
+from apps.documenten.serializers import DocumentSerializer
+from apps.gebruikers.models import Notificatie, User
+from apps.gebruikers.serializers import (
+    NotificatieSerializer,
+    UserProfileSerializer,
+)
+from apps.organisaties.models import Organisatie
+from apps.organisaties.serializers import (
+    OrganisatieCreateSerializer,
+    OrganisatieDetailSerializer,
+    OrganisatieListSerializer,
+)
+from apps.pakketten.models import Koppeling, Pakket, PakketGebruik
+from apps.pakketten.serializers import (
+    KoppelingSerializer,
+    PakketCreateUpdateSerializer,
+    PakketDetailSerializer,
+    PakketGebruikSerializer,
+    PakketListSerializer,
+)
+from apps.standaarden.models import Standaard
+from apps.standaarden.serializers import StandaardSerializer
 
-from .permissions import IsAanbodBeheerder, IsGebruikBeheerder, IsFunctioneelBeheerder
-from apps.core.audit import AuditLogMixin, log_actie, AuditLog
+from .permissions import IsAanbodBeheerder, IsFunctioneelBeheerder, IsGebruikBeheerder
 
+logger = logging.getLogger(__name__)
 
 # ====================
 # Publieke endpoints

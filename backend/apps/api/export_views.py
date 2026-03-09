@@ -7,9 +7,9 @@ from django.http import HttpResponse
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
-from apps.architectuur.ameff_export import generate_ameff
 from apps.api.permissions import IsFullyAuthenticated, IsFunctioneelBeheerder
-from apps.core.audit import log_actie, AuditLog
+from apps.architectuur.ameff_export import generate_ameff
+from apps.core.audit import AuditLog, log_actie
 from apps.pakketten.models import Pakket, PakketGebruik
 
 
@@ -151,7 +151,7 @@ class ExportPakketOverzichtExcel(APIView):
 
     def get(self, request):
         import openpyxl
-        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.styles import Alignment, Font, PatternFill
         from openpyxl.utils import get_column_letter
 
         user = request.user
@@ -274,9 +274,10 @@ class ExportAuditLogCSV(APIView):
     permission_classes = [IsFunctioneelBeheerder]
 
     def get(self, request):
-        from zoneinfo import ZoneInfo
         from datetime import datetime as _dt
-        from django.utils.dateparse import parse_datetime, parse_date
+        from zoneinfo import ZoneInfo
+
+        from django.utils.dateparse import parse_date, parse_datetime
         from django.utils.timezone import make_aware
 
         ams = ZoneInfo("Europe/Amsterdam")

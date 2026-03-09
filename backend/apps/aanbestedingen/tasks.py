@@ -133,8 +133,8 @@ def _koppel_organisatie(aanbesteding):
 
 def _koppel_gemma(aanbesteding):
     """Koppel aanbesteding aan GEMMA-componenten o.b.v. CPV-codes."""
-    from apps.architectuur.models import GemmaComponent
     from apps.aanbestedingen.client import bepaal_gemma_componenten
+    from apps.architectuur.models import GemmaComponent
 
     component_namen = bepaal_gemma_componenten(aanbesteding.cpv_codes)
 

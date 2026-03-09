@@ -1,18 +1,15 @@
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django_otp.plugins.otp_totp.models import TOTPDevice
 
-from apps.gebruikers.models import User
-from apps.gebruikers.serializers import UserRegistratieSerializer, UserProfileSerializer
 from apps.api.permissions import IsFullyAuthenticated, IsTOTPPending
-
+from apps.gebruikers.models import User
+from apps.gebruikers.serializers import UserProfileSerializer, UserRegistratieSerializer
 
 # ── Cookie-helpers ────────────────────────────────────────────────────────────
 
@@ -242,9 +239,9 @@ class WachtwoordResetRequestView(APIView):
         # Altijd succesbericht retourneren (voorkom email enumeration)
         if email:
             try:
-                user = User.objects.get(email=email)
+                _user = User.objects.get(email=email)  # noqa: F841
                 # TODO: Stuur wachtwoord-reset e-mail via Celery
-                # send_password_reset_email.delay(user.id)
+                # send_password_reset_email.delay(_user.id)
             except User.DoesNotExist:
                 pass
         return Response(

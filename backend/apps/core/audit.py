@@ -7,10 +7,8 @@ Gebruik:
     class MijnViewSet(AuditLogMixin, viewsets.ModelViewSet):
         ...
 """
-import json
 import logging
 
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -83,7 +81,7 @@ class AuditLog(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.tijdstip:%Y-%m-%d %H:%M} | {self.actor_email or 'anoniem'} | {self.actie} | {self.object_type} #{self.object_id}"
+        return f"{self.tijdstip:%Y-%m-%d %H:%M} | {self.actor_email or 'anoniem'} | {self.actie} | {self.object_type} #{self.object_id}"  # noqa: E501
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

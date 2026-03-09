@@ -1,11 +1,10 @@
 """Custom permissies voor de Softwarecatalogus API."""
 from rest_framework.permissions import (
+    SAFE_METHODS,
     BasePermission,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-    SAFE_METHODS,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2FA-bewuste permissies (issue #5: blokkeer 2FA bypass via totp_pending token)

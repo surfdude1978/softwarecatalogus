@@ -556,7 +556,7 @@ class Command(BaseCommand):
     # ──────────────────────────────────────────────────────────────
 
     def _create_pakketten(self, leveranciers, users):
-        lev = {l.naam: l for l in leveranciers}
+        lev = {lev_obj.naam: lev_obj for lev_obj in leveranciers}
 
         pakket_data = [
             # (naam, versie, leverancier, licentievorm, beschrijving, website, cloud_provider, status)
@@ -1058,7 +1058,7 @@ class Command(BaseCommand):
         try:
             from apps.aanbestedingen.client import TenderNedClient
             from apps.aanbestedingen.models import Aanbesteding
-            from apps.aanbestedingen.tasks import _koppel_organisatie, _koppel_gemma
+            from apps.aanbestedingen.tasks import _koppel_gemma, _koppel_organisatie
 
             client = TenderNedClient(demo_mode=True)
             aanbestedingen_data = client.haal_ict_aanbestedingen_op()
