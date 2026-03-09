@@ -1,4 +1,5 @@
 """URL configuration voor Softwarecatalogus."""
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -9,12 +10,15 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 def api_root(request):
     """Root API endpoint."""
-    return JsonResponse({
-        "message": "Softwarecatalogus API",
-        "docs": "/api/v1/docs/",
-        "redoc": "/api/v1/redoc/",
-        "schema": "/api/v1/schema/"
-    })
+    return JsonResponse(
+        {
+            "message": "Softwarecatalogus API",
+            "docs": "/api/v1/docs/",
+            "redoc": "/api/v1/redoc/",
+            "schema": "/api/v1/schema/",
+        }
+    )
+
 
 urlpatterns = [
     path("", api_root, name="api-root"),
@@ -31,6 +35,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     try:
         import debug_toolbar
+
         urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
     except ImportError:
         pass

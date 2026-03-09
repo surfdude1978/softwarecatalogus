@@ -3,6 +3,7 @@
 Genereert een AMEFF XML-bestand van het pakketlandschap van een organisatie,
 inclusief GEMMA referentiecomponenten en hun relaties met pakketten.
 """
+
 import io
 import uuid
 from xml.etree import ElementTree as ET
@@ -29,12 +30,15 @@ def generate_ameff(organisatie_id=None, pakketten_queryset=None):
     ET.register_namespace("xsi", XSI_NS)
 
     # Root element
-    root = ET.Element("model", {
-        "xmlns": ARCHIMATE_NS,
-        "xmlns:xsi": XSI_NS,
-        "identifier": f"id-{uuid.uuid4()}",
-        "name": "Softwarecatalogus Export",
-    })
+    root = ET.Element(
+        "model",
+        {
+            "xmlns": ARCHIMATE_NS,
+            "xmlns:xsi": XSI_NS,
+            "identifier": f"id-{uuid.uuid4()}",
+            "name": "Softwarecatalogus Export",
+        },
+    )
 
     # Metadata
     metadata = ET.SubElement(root, "metadata")
@@ -51,10 +55,14 @@ def generate_ameff(organisatie_id=None, pakketten_queryset=None):
 
     # Verzamel pakketten en GEMMA componenten
     if organisatie_id:
-        gebruik_items = PakketGebruik.objects.filter(
-            organisatie_id=organisatie_id,
-            status="in_gebruik",
-        ).select_related("pakket").prefetch_related("pakket__gemma_componenten")
+        gebruik_items = (
+            PakketGebruik.objects.filter(
+                organisatie_id=organisatie_id,
+                status="in_gebruik",
+            )
+            .select_related("pakket")
+            .prefetch_related("pakket__gemma_componenten")
+        )
 
         pakket_set = {pg.pakket for pg in gebruik_items}
     elif pakketten_queryset is not None:
@@ -79,10 +87,14 @@ def generate_ameff(organisatie_id=None, pakketten_queryset=None):
     }
 
     for component in gemma_components:
-        elem = ET.SubElement(elements, "element", {
-            "identifier": component.archimate_id,
-            f"{{{XSI_NS}}}type": archimate_type_map.get(component.type, "ApplicationComponent"),
-        })
+        elem = ET.SubElement(
+            elements,
+            "element",
+            {
+                "identifier": component.archimate_id,
+                f"{{{XSI_NS}}}type": archimate_type_map.get(component.type, "ApplicationComponent"),
+            },
+        )
         name = ET.SubElement(elem, "name", {"xml:lang": "nl"})
         name.text = component.naam
         if component.beschrijving:
@@ -92,10 +104,14 @@ def generate_ameff(organisatie_id=None, pakketten_queryset=None):
     # Exporteer pakketten als ArchiMate ApplicationComponents
     for pakket in pakket_set:
         pakket_arch_id = f"pkg-{pakket.id}"
-        elem = ET.SubElement(elements, "element", {
-            "identifier": pakket_arch_id,
-            f"{{{XSI_NS}}}type": "ApplicationComponent",
-        })
+        elem = ET.SubElement(
+            elements,
+            "element",
+            {
+                "identifier": pakket_arch_id,
+                f"{{{XSI_NS}}}type": "ApplicationComponent",
+            },
+        )
         name = ET.SubElement(elem, "name", {"xml:lang": "nl"})
         name.text = pakket.naam
         if pakket.beschrijving:
@@ -104,12 +120,16 @@ def generate_ameff(organisatie_id=None, pakketten_queryset=None):
 
         # Relaties: pakket -> GEMMA component (Realization)
         for component in pakket_to_gemma.get(pakket, []):
-            ET.SubElement(relationships, "relationship", {
-                "identifier": f"rel-{uuid.uuid4()}",
-                f"{{{XSI_NS}}}type": "Realization",
-                "source": pakket_arch_id,
-                "target": component.archimate_id,
-            })
+            ET.SubElement(
+                relationships,
+                "relationship",
+                {
+                    "identifier": f"rel-{uuid.uuid4()}",
+                    f"{{{XSI_NS}}}type": "Realization",
+                    "source": pakket_arch_id,
+                    "target": component.archimate_id,
+                },
+            )
 
     # Genereer XML string
     tree = ET.ElementTree(root)

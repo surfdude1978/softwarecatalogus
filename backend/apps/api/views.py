@@ -1,4 +1,5 @@
 """API ViewSets voor de Softwarecatalogus."""
+
 import logging
 
 from django.db.models import Count, Q
@@ -59,6 +60,7 @@ logger = logging.getLogger(__name__)
 # Publieke endpoints
 # ====================
 
+
 class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Pakketten in de softwarecatalogus.
@@ -68,6 +70,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     create: Nieuw pakket registreren (aanbod-beheerder).
     update: Pakket bijwerken (aanbod-beheerder).
     """
+
     queryset = Pakket.objects.select_related("leverancier").annotate(
         aantal_gebruikers=Count(
             "pakketgebruik",
@@ -119,10 +122,12 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
         if request.method == "GET":
             componenten = pakket.gemma_componenten.all()
-            return Response({
-                "gemma_component_ids": [str(c.id) for c in componenten],
-                "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
-            })
+            return Response(
+                {
+                    "gemma_component_ids": [str(c.id) for c in componenten],
+                    "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
+                }
+            )
 
         # PUT — vervang alle koppelingen
         component_ids = request.data.get("gemma_component_ids", [])
@@ -143,21 +148,23 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
         # Vervang alle bestaande koppelingen atomair
         PakketGemmaComponent.objects.filter(pakket=pakket).delete()
         if componenten:
-            PakketGemmaComponent.objects.bulk_create([
-                PakketGemmaComponent(pakket=pakket, gemma_component=c)
-                for c in componenten
-            ])
+            PakketGemmaComponent.objects.bulk_create(
+                [PakketGemmaComponent(pakket=pakket, gemma_component=c) for c in componenten]
+            )
 
-        return Response({
-            "gemma_component_ids": [str(c.id) for c in componenten],
-            "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
-        })
+        return Response(
+            {
+                "gemma_component_ids": [str(c.id) for c in componenten],
+                "gemma_componenten": GemmaComponentListSerializer(componenten, many=True).data,
+            }
+        )
 
 
 class OrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Organisaties (gemeenten, leveranciers, samenwerkingsverbanden).
     """
+
     queryset = Organisatie.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {"type": ["exact"], "status": ["exact"]}
@@ -188,6 +195,7 @@ class OrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
 class StandaardViewSet(viewsets.ReadOnlyModelViewSet):
     """Standaarden van het Forum Standaardisatie."""
+
     queryset = Standaard.objects.all()
     serializer_class = StandaardSerializer
     permission_classes = [AllowAny]
@@ -199,6 +207,7 @@ class StandaardViewSet(viewsets.ReadOnlyModelViewSet):
 
 class GemmaComponentViewSet(viewsets.ReadOnlyModelViewSet):
     """GEMMA referentiecomponenten."""
+
     queryset = GemmaComponent.objects.all()
     permission_classes = [AllowAny]
     pagination_class = None  # Klein, stabiel dataset — geen paginering nodig
@@ -249,6 +258,7 @@ class GemmaKaartView(_APIView):
 
 class NieuwsberichtViewSet(viewsets.ReadOnlyModelViewSet):
     """Nieuwsberichten."""
+
     queryset = Nieuwsbericht.objects.filter(gepubliceerd=True)
     permission_classes = [AllowAny]
     ordering = ["-publicatie_datum"]
@@ -261,6 +271,7 @@ class NieuwsberichtViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PaginaViewSet(viewsets.ReadOnlyModelViewSet):
     """CMS pagina's."""
+
     queryset = Pagina.objects.filter(gepubliceerd=True)
     serializer_class = PaginaSerializer
     permission_classes = [AllowAny]
@@ -271,12 +282,14 @@ class PaginaViewSet(viewsets.ReadOnlyModelViewSet):
 # Beveiligde endpoints
 # ====================
 
+
 class MijnPakketOverzichtViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """
     Pakketoverzicht van de eigen organisatie.
 
     Gebruik-beheerders beheren hier hun pakketlandschap.
     """
+
     serializer_class = PakketGebruikSerializer
     permission_classes = [IsGebruikBeheerder]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -288,9 +301,7 @@ class MijnPakketOverzichtViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if user.rol == "functioneel_beheerder":
             return PakketGebruik.objects.select_related("pakket", "organisatie").all()
         if user.organisatie:
-            return PakketGebruik.objects.select_related("pakket", "organisatie").filter(
-                organisatie=user.organisatie
-            )
+            return PakketGebruik.objects.select_related("pakket", "organisatie").filter(organisatie=user.organisatie)
         return PakketGebruik.objects.none()
 
 
@@ -298,6 +309,7 @@ class GemeentePakketOverzichtViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Pakketoverzicht van een andere gemeente bekijken ('gluren bij de buren').
     """
+
     serializer_class = PakketGebruikSerializer
     permission_classes = [IsFullyAuthenticated]
 
@@ -311,6 +323,7 @@ class GemeentePakketOverzichtViewSet(viewsets.ReadOnlyModelViewSet):
 
 class KoppelingViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Koppelingen tussen pakketten in eigen landschap."""
+
     serializer_class = KoppelingSerializer
     permission_classes = [IsGebruikBeheerder]
 
@@ -326,6 +339,7 @@ class KoppelingViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
 class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Documenten (DPIA's, verwerkersovereenkomsten, etc.)."""
+
     serializer_class = DocumentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {"type": ["exact"], "pakket": ["exact"], "status": ["exact"]}
@@ -346,9 +360,7 @@ class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return qs
 
         # Gemeentegebruikers zien publieke + gemeenten-documenten
-        filters = Q(status="gepubliceerd") & (
-            Q(gedeeld_met="publiek") | Q(gedeeld_met="gemeenten")
-        )
+        filters = Q(status="gepubliceerd") & (Q(gedeeld_met="publiek") | Q(gedeeld_met="gemeenten"))
         # Plus eigen prive documenten
         if user.organisatie:
             filters |= Q(organisatie=user.organisatie)
@@ -358,6 +370,7 @@ class DocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
 class ProfielViewSet(viewsets.GenericViewSet):
     """Eigen gebruikersprofiel."""
+
     serializer_class = UserProfileSerializer
     permission_classes = [IsFullyAuthenticated]
 
@@ -374,6 +387,7 @@ class ProfielViewSet(viewsets.GenericViewSet):
 
 class NotificatieViewSet(viewsets.ReadOnlyModelViewSet):
     """Notificaties voor de ingelogde gebruiker."""
+
     serializer_class = NotificatieSerializer
     permission_classes = [IsFullyAuthenticated]
 
@@ -397,8 +411,10 @@ class NotificatieViewSet(viewsets.ReadOnlyModelViewSet):
 # Admin endpoints
 # ====================
 
+
 class AdminOrganisatieViewSet(AuditLogMixin, viewsets.ModelViewSet):
     """Admin beheer van organisaties (functioneel beheerder)."""
+
     queryset = Organisatie.objects.all()
     serializer_class = OrganisatieDetailSerializer
     permission_classes = [IsFunctioneelBeheerder]
@@ -467,6 +483,7 @@ class AdminGebruikerViewSet(AuditLogMixin, viewsets.ReadOnlyModelViewSet):
     wachtend: Lijst van gebruikers die wachten op fiattering.
     fiatteren: Activeer een wachtende gebruiker.
     """
+
     queryset = User.objects.select_related("organisatie").all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsFunctioneelBeheerder]
@@ -538,6 +555,7 @@ class AdminGebruikerViewSet(AuditLogMixin, viewsets.ReadOnlyModelViewSet):
 # Aanbestedingen (TenderNed)
 # ====================
 
+
 class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ICT-aanbestedingen van Nederlandse gemeenten vanuit TenderNed.
@@ -601,6 +619,7 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         pakket_id = self.request.query_params.get("pakket")
         if pakket_id:
             from apps.pakketten.models import Pakket as PakketModel
+
             try:
                 pakket = PakketModel.objects.prefetch_related("gemma_componenten").get(id=pakket_id)
                 gemma_ids = list(pakket.gemma_componenten.values_list("id", flat=True))
@@ -617,6 +636,7 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         leverancier_id = self.request.query_params.get("leverancier")
         if leverancier_id:
             from apps.pakketten.models import Pakket as PakketModel
+
             gemma_ids = list(
                 PakketModel.objects.filter(leverancier_id=leverancier_id)
                 .values_list("gemma_componenten__id", flat=True)
@@ -656,10 +676,12 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
 
         if "limit" in request.query_params:
             serializer = self.get_serializer(qs[:limit], many=True)
-            return Response({
-                "count": qs.count(),
-                "results": serializer.data,
-            })
+            return Response(
+                {
+                    "count": qs.count(),
+                    "results": serializer.data,
+                }
+            )
 
         return super().list(request, *args, **kwargs)
 
@@ -669,6 +691,7 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         Gebruikt Django cache als mutex om herhaalde calls te voorkomen.
         """
         from django.core.cache import cache
+
         cache_key = "tenderned_bootstrap_done"
         if cache.get(cache_key):
             return
@@ -676,6 +699,7 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
         cache.set(cache_key, True, timeout=3600)
         try:
             from apps.aanbestedingen.tasks import sync_tenderned
+
             sync_tenderned(dagen_terug=30, max_resultaten=100)
             logger.info("TenderNed auto-bootstrap geslaagd")
         except Exception as exc:
@@ -684,5 +708,6 @@ class AanbestedingenViewSet(viewsets.ReadOnlyModelViewSet):
     def sync(self, request):
         """Handmatige TenderNed sync (alleen functioneel beheerder)."""
         from apps.aanbestedingen.tasks import sync_tenderned
+
         resultaat = sync_tenderned.delay()
         return Response({"detail": "Synchronisatie gestart.", "task_id": str(resultaat.id)})

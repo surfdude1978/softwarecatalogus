@@ -1,4 +1,5 @@
 """Admin configuratie voor gebruikers."""
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -20,8 +21,11 @@ class UserAdmin(BaseUserAdmin):
     )
 
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "naam", "password1", "password2", "organisatie", "rol"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "naam", "password1", "password2", "organisatie", "rol"),
+            },
+        ),
     )

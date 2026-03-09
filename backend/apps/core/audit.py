@@ -7,6 +7,7 @@ Gebruik:
     class MijnViewSet(AuditLogMixin, viewsets.ModelViewSet):
         ...
 """
+
 import logging
 
 from django.db import models
@@ -17,6 +18,7 @@ logger = logging.getLogger("softwarecatalogus.audit")
 
 # ── Model ────────────────────────────────────────────────────────────────────
 
+
 class AuditLog(models.Model):
     """Registratie van elke schrijfactie in de applicatie."""
 
@@ -24,46 +26,35 @@ class AuditLog(models.Model):
         AANGEMAAKT = "aangemaakt", _("Aangemaakt")
         BIJGEWERKT = "bijgewerkt", _("Bijgewerkt")
         VERWIJDERD = "verwijderd", _("Verwijderd")
-        INGELOGD   = "ingelogd",   _("Ingelogd")
-        UITGELOGD  = "uitgelogd",  _("Uitgelogd")
-        EXPORT     = "export",     _("Export")
-        IMPORT     = "import",     _("Import")
+        INGELOGD = "ingelogd", _("Ingelogd")
+        UITGELOGD = "uitgelogd", _("Uitgelogd")
+        EXPORT = "export", _("Export")
+        IMPORT = "import", _("Import")
         GEFIATEERD = "gefiateerd", _("Gefiateerd")
 
     # Wie
     actor_id = models.CharField(
-        max_length=36, blank=True, null=True,
-        help_text="UUID van de gebruiker die de actie uitvoerde (null = anoniem)."
+        max_length=36, blank=True, null=True, help_text="UUID van de gebruiker die de actie uitvoerde (null = anoniem)."
     )
     actor_email = models.EmailField(
-        blank=True,
-        help_text="E-mailadres ten tijde van de actie (voor historische referentie)."
+        blank=True, help_text="E-mailadres ten tijde van de actie (voor historische referentie)."
     )
 
     # Wat
     actie = models.CharField(max_length=20, choices=Actie.choices)
     object_type = models.CharField(
-        max_length=100,
-        help_text="Type object waarop de actie werd uitgevoerd (bijv. 'Pakket')."
+        max_length=100, help_text="Type object waarop de actie werd uitgevoerd (bijv. 'Pakket')."
     )
-    object_id = models.CharField(
-        max_length=36, blank=True, null=True,
-        help_text="UUID of PK van het object."
-    )
+    object_id = models.CharField(max_length=36, blank=True, null=True, help_text="UUID of PK van het object.")
     object_omschrijving = models.CharField(
-        max_length=500, blank=True,
-        help_text="Leesbare omschrijving van het object (bijv. naam)."
+        max_length=500, blank=True, help_text="Leesbare omschrijving van het object (bijv. naam)."
     )
 
     # Details
     wijzigingen = models.JSONField(
-        default=dict, blank=True,
-        help_text="Dict van gewijzigde velden: {'veld': {'oud': ..., 'nieuw': ...}}."
+        default=dict, blank=True, help_text="Dict van gewijzigde velden: {'veld': {'oud': ..., 'nieuw': ...}}."
     )
-    extra = models.JSONField(
-        default=dict, blank=True,
-        help_text="Aanvullende context (endpoint, parameters, etc.)."
-    )
+    extra = models.JSONField(default=dict, blank=True, help_text="Aanvullende context (endpoint, parameters, etc.).")
 
     # Technisch
     ip_adres = models.GenericIPAddressField(null=True, blank=True)
@@ -85,6 +76,7 @@ class AuditLog(models.Model):
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def _get_ip(request) -> str | None:
     """Haal het IP-adres op van de request (proxy-aware)."""
@@ -168,6 +160,7 @@ def log_actie(
 
 
 # ── Mixin ────────────────────────────────────────────────────────────────────
+
 
 class AuditLogMixin:
     """ViewSet mixin die automatisch audit logs aanmaakt bij schrijfacties.

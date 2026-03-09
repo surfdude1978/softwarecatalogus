@@ -1,4 +1,5 @@
 """Modellen voor CMS-content (nieuwsberichten, teksten)."""
+
 from django.db import models
 
 from apps.core.models import BaseModel

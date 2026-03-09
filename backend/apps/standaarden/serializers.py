@@ -1,4 +1,5 @@
 """Serializers voor standaarden."""
+
 from rest_framework import serializers
 
 from .models import PakketStandaard, Standaard
@@ -10,8 +11,13 @@ class StandaardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Standaard
         fields = [
-            "id", "naam", "type", "type_display", "versie",
-            "beschrijving", "forum_standaardisatie_url",
+            "id",
+            "naam",
+            "type",
+            "type_display",
+            "versie",
+            "beschrijving",
+            "forum_standaardisatie_url",
         ]
         read_only_fields = ["id"]
 
@@ -22,7 +28,11 @@ class PakketStandaardSerializer(serializers.ModelSerializer):
     class Meta:
         model = PakketStandaard
         fields = [
-            "id", "pakket", "standaard", "standaard_naam",
-            "ondersteund", "testrapport_url",
+            "id",
+            "pakket",
+            "standaard",
+            "standaard_naam",
+            "ondersteund",
+            "testrapport_url",
         ]
         read_only_fields = ["id"]

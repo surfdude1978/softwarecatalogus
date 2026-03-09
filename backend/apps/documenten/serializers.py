@@ -1,4 +1,5 @@
 """Serializers voor documenten."""
+
 from rest_framework import serializers
 
 from .models import Document
@@ -12,8 +13,17 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = [
-            "id", "pakket", "organisatie", "type", "type_display",
-            "naam", "bestand", "status", "status_display",
-            "gedeeld_met", "gedeeld_met_display", "aangemaakt_op",
+            "id",
+            "pakket",
+            "organisatie",
+            "type",
+            "type_display",
+            "naam",
+            "bestand",
+            "status",
+            "status_display",
+            "gedeeld_met",
+            "gedeeld_met_display",
+            "aangemaakt_op",
         ]
         read_only_fields = ["id", "aangemaakt_op"]

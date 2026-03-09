@@ -1,4 +1,5 @@
 """Gedeelde basismodellen voor de Softwarecatalogus."""
+
 import uuid
 
 from django.db import models

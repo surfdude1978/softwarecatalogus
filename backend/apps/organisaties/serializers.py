@@ -1,4 +1,5 @@
 """Serializers voor organisaties."""
+
 from rest_framework import serializers
 
 from .models import Contactpersoon, Organisatie
@@ -13,6 +14,7 @@ class ContactpersoonSerializer(serializers.ModelSerializer):
 
 class OrganisatieListSerializer(serializers.ModelSerializer):
     """Compacte weergave voor lijsten."""
+
     type_display = serializers.CharField(source="get_type_display", read_only=True)
 
     class Meta:
@@ -22,6 +24,7 @@ class OrganisatieListSerializer(serializers.ModelSerializer):
 
 class OrganisatieDetailSerializer(serializers.ModelSerializer):
     """Volledige weergave voor detailpagina."""
+
     contactpersonen = ContactpersoonSerializer(many=True, read_only=True)
     type_display = serializers.CharField(source="get_type_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -30,10 +33,20 @@ class OrganisatieDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organisatie
         fields = [
-            "id", "naam", "type", "type_display", "status", "status_display",
-            "oin", "bevoegd_gezag_code", "website", "beschrijving",
-            "contactpersonen", "aantal_pakketten",
-            "aangemaakt_op", "gewijzigd_op",
+            "id",
+            "naam",
+            "type",
+            "type_display",
+            "status",
+            "status_display",
+            "oin",
+            "bevoegd_gezag_code",
+            "website",
+            "beschrijving",
+            "contactpersonen",
+            "aantal_pakketten",
+            "aangemaakt_op",
+            "gewijzigd_op",
         ]
         read_only_fields = ["id", "aangemaakt_op", "gewijzigd_op"]
 
@@ -45,11 +58,17 @@ class OrganisatieDetailSerializer(serializers.ModelSerializer):
 
 class OrganisatieCreateSerializer(serializers.ModelSerializer):
     """Serializer voor het aanmaken van organisaties."""
+
     class Meta:
         model = Organisatie
         fields = [
-            "id", "naam", "type", "oin", "bevoegd_gezag_code",
-            "website", "beschrijving",
+            "id",
+            "naam",
+            "type",
+            "oin",
+            "bevoegd_gezag_code",
+            "website",
+            "beschrijving",
         ]
         read_only_fields = ["id"]
 

@@ -1,4 +1,5 @@
 """Base Django settings voor Softwarecatalogus."""
+
 from pathlib import Path
 
 from decouple import config
@@ -219,7 +220,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost",
     "http://127.0.0.1",
-    "http://host.docker.internal",       # swc-demo Docker container (demo opnames)
+    "http://host.docker.internal",  # swc-demo Docker container (demo opnames)
     "http://host.docker.internal:3000",  # Next.js via host.docker.internal
 ]
 

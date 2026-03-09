@@ -4,6 +4,7 @@ Parseert een AMEFF XML-bestand en importeert GEMMA componenten
 in de database. Bestaande componenten worden bijgewerkt op basis
 van hun archimate_id.
 """
+
 import logging
 from xml.etree import ElementTree as ET
 
@@ -68,12 +69,14 @@ def parse_ameff(file_content):
             documentation = doc_elem.text if doc_elem is not None else ""
 
             if identifier and name and xsi_type in TYPE_MAPPING:
-                elements.append({
-                    "identifier": identifier,
-                    "name": name,
-                    "type": xsi_type,
-                    "documentation": documentation or "",
-                })
+                elements.append(
+                    {
+                        "identifier": identifier,
+                        "name": name,
+                        "type": xsi_type,
+                        "documentation": documentation or "",
+                    }
+                )
 
         elif tag == "relationship":
             xsi_type = elem.get(f"{{{NAMESPACES['xsi']}}}type", "")
@@ -83,12 +86,14 @@ def parse_ameff(file_content):
             identifier = elem.get("identifier", "")
 
             if source and target:
-                relationships.append({
-                    "identifier": identifier,
-                    "type": xsi_type,
-                    "source": source,
-                    "target": target,
-                })
+                relationships.append(
+                    {
+                        "identifier": identifier,
+                        "type": xsi_type,
+                        "source": source,
+                        "target": target,
+                    }
+                )
 
     return {"elements": elements, "relationships": relationships}
 
@@ -126,11 +131,13 @@ def import_ameff(file_content, dry_run=False):
         if existing:
             # Check voor conflicten (naam veranderd)
             if existing.naam != elem["name"]:
-                stats["conflicts"].append({
-                    "archimate_id": elem["identifier"],
-                    "old_name": existing.naam,
-                    "new_name": elem["name"],
-                })
+                stats["conflicts"].append(
+                    {
+                        "archimate_id": elem["identifier"],
+                        "old_name": existing.naam,
+                        "new_name": elem["name"],
+                    }
+                )
 
             if not dry_run:
                 existing.naam = elem["name"]

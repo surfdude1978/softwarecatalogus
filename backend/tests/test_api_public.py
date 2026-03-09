@@ -1,4 +1,5 @@
 """Tests voor publieke API endpoints."""
+
 import pytest
 from django.urls import reverse
 
@@ -12,6 +13,7 @@ pytestmark = pytest.mark.django_db
 # ========================
 # Pakketten API
 # ========================
+
 
 class TestPakkettenAPI:
     def test_lijst_pakketten_zonder_auth(self, api_client, pakket, concept_pakket):
@@ -97,6 +99,7 @@ class TestPakkettenAPI:
 # Organisaties API
 # ========================
 
+
 class TestOrganisatiesAPI:
     def test_lijst_organisaties(self, api_client, gemeente, leverancier):
         url = reverse("api:organisatie-list")
@@ -154,6 +157,7 @@ class TestOrganisatiesAPI:
 # Standaarden API
 # ========================
 
+
 class TestStandaardenAPI:
     def test_lijst_standaarden(self, api_client, standaard, standaard2):
         url = reverse("api:standaard-list")
@@ -187,6 +191,7 @@ class TestStandaardenAPI:
 # GEMMA Componenten API
 # ========================
 
+
 class TestGemmaComponentenAPI:
     def test_lijst_componenten(self, api_client, gemma_component, gemma_child):
         url = reverse("api:gemma-component-list")
@@ -213,6 +218,7 @@ class TestGemmaComponentenAPI:
 # Content API
 # ========================
 
+
 class TestContentAPI:
     def test_lijst_paginas(self, api_client, pagina):
         url = reverse("api:pagina-list")
@@ -232,9 +238,7 @@ class TestContentAPI:
         assert len(response.data["results"]) >= 1
 
     def test_ongepubliceerde_pagina_niet_zichtbaar(self, api_client, db):
-        Pagina.objects.create(
-            titel="Verborgen", slug="verborgen", inhoud="Test", gepubliceerd=False
-        )
+        Pagina.objects.create(titel="Verborgen", slug="verborgen", inhoud="Test", gepubliceerd=False)
         url = reverse("api:pagina-list")
         response = api_client.get(url)
         titels = [p["titel"] for p in response.data["results"]]

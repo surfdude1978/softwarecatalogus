@@ -1,4 +1,5 @@
 """Management command voor het importeren van GEMMA componenten uit AMEFF."""
+
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.architectuur.ameff_import import import_ameff
@@ -40,6 +41,5 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"\n  Conflicten ({len(stats['conflicts'])}):"))
             for conflict in stats["conflicts"]:
                 self.stdout.write(
-                    f"    {conflict['archimate_id']}: "
-                    f"'{conflict['old_name']}' -> '{conflict['new_name']}'"
+                    f"    {conflict['archimate_id']}: '{conflict['old_name']}' -> '{conflict['new_name']}'"
                 )

@@ -1,4 +1,5 @@
 """Tests voor alle Django modellen."""
+
 import uuid
 
 import pytest
@@ -14,6 +15,7 @@ from apps.standaarden.models import PakketStandaard, Standaard
 # BaseModel
 # ========================
 
+
 class TestBaseModel:
     def test_uuid_pk_wordt_automatisch_gegenereerd(self, pakket):
         assert isinstance(pakket.id, uuid.UUID)
@@ -26,6 +28,7 @@ class TestBaseModel:
 # ========================
 # User
 # ========================
+
 
 class TestUserModel:
     def test_create_user(self, db):
@@ -59,9 +62,7 @@ class TestUserModel:
             User.objects.create_user(email="dubbel@example.com", naam="Twee", password="ww12345678")
 
     def test_default_status_wacht_op_fiattering(self, db):
-        user = User.objects.create_user(
-            email="nieuw@example.com", naam="Nieuw", password="wachtwoord123"
-        )
+        user = User.objects.create_user(email="nieuw@example.com", naam="Nieuw", password="wachtwoord123")
         assert user.status == User.Status.WACHT_OP_FIATTERING
 
     def test_is_beheerder_property(self, gebruik_beheerder, aanbod_beheerder, functioneel_beheerder, gebruiker_publiek):
@@ -85,6 +86,7 @@ class TestUserModel:
 # ========================
 # Organisatie
 # ========================
+
 
 class TestOrganisatieModel:
     def test_create_organisatie(self, gemeente):
@@ -121,6 +123,7 @@ class TestOrganisatieModel:
 # Pakket
 # ========================
 
+
 class TestPakketModel:
     def test_create_pakket(self, pakket, leverancier):
         assert pakket.naam == "Suite4Gemeenten"
@@ -148,6 +151,7 @@ class TestPakketModel:
 # PakketGebruik
 # ========================
 
+
 class TestPakketGebruikModel:
     def test_create_pakketgebruik(self, pakket_gebruik, pakket, gemeente):
         assert pakket_gebruik.pakket == pakket
@@ -168,6 +172,7 @@ class TestPakketGebruikModel:
 # Koppeling
 # ========================
 
+
 class TestKoppelingModel:
     def test_create_koppeling(self, pakket_gebruik, pakket_gebruik2):
         koppeling = Koppeling.objects.create(
@@ -185,6 +190,7 @@ class TestKoppelingModel:
 # ========================
 # Standaard
 # ========================
+
 
 class TestStandaardModel:
     def test_create_standaard(self, standaard):
@@ -211,6 +217,7 @@ class TestStandaardModel:
 # GemmaComponent
 # ========================
 
+
 class TestGemmaComponentModel:
     def test_create_component(self, gemma_component):
         assert gemma_component.naam == "Zaaksysteem"
@@ -233,6 +240,7 @@ class TestGemmaComponentModel:
 # ========================
 # Notificatie
 # ========================
+
 
 class TestNotificatieModel:
     def test_create_notificatie(self, gebruik_beheerder):

@@ -1,4 +1,5 @@
 """Admin-only views voor functioneel beheerders."""
+
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from .permissions import IsFunctioneelBeheerder
 
 class GemmaImportView(APIView):
     """Importeer GEMMA componenten vanuit een AMEFF bestand (admin)."""
+
     permission_classes = [IsFunctioneelBeheerder]
     parser_classes = [MultiPartParser]
 
@@ -33,13 +35,15 @@ class GemmaImportView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response({
-            "dry_run": dry_run,
-            "statistieken": {
-                "elementen_gevonden": stats["elements_found"],
-                "relaties_gevonden": stats["relationships_found"],
-                "aangemaakt": stats["created"],
-                "bijgewerkt": stats["updated"],
-            },
-            "conflicten": stats["conflicts"],
-        })
+        return Response(
+            {
+                "dry_run": dry_run,
+                "statistieken": {
+                    "elementen_gevonden": stats["elements_found"],
+                    "relaties_gevonden": stats["relationships_found"],
+                    "aangemaakt": stats["created"],
+                    "bijgewerkt": stats["updated"],
+                },
+                "conflicten": stats["conflicts"],
+            }
+        )

@@ -1,4 +1,5 @@
 """Serializers voor pakketten, gebruik en koppelingen."""
+
 from rest_framework import serializers
 
 from apps.architectuur.serializers import GemmaComponentListSerializer
@@ -10,6 +11,7 @@ from .models import Koppeling, Pakket, PakketGebruik
 
 class PakketListSerializer(serializers.ModelSerializer):
     """Compacte weergave voor zoekresultaten en lijsten."""
+
     leverancier_naam = serializers.CharField(source="leverancier.naam", read_only=True)
     licentievorm_display = serializers.CharField(source="get_licentievorm_display", read_only=True)
     aantal_gebruikers = serializers.IntegerField(read_only=True)
@@ -17,14 +19,22 @@ class PakketListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pakket
         fields = [
-            "id", "naam", "versie", "status", "beschrijving",
-            "leverancier", "leverancier_naam", "licentievorm",
-            "licentievorm_display", "aantal_gebruikers",
+            "id",
+            "naam",
+            "versie",
+            "status",
+            "beschrijving",
+            "leverancier",
+            "leverancier_naam",
+            "licentievorm",
+            "licentievorm_display",
+            "aantal_gebruikers",
         ]
 
 
 class PakketDetailSerializer(serializers.ModelSerializer):
     """Volledige weergave voor detailpagina."""
+
     leverancier = OrganisatieListSerializer(read_only=True)
     licentievorm_display = serializers.CharField(source="get_licentievorm_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -36,34 +46,49 @@ class PakketDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pakket
         fields = [
-            "id", "naam", "versie", "status", "status_display",
-            "beschrijving", "leverancier", "licentievorm",
-            "licentievorm_display", "open_source_licentie",
-            "website_url", "documentatie_url", "cloud_provider",
-            "contactpersoon", "standaarden", "gemma_componenten",
-            "aantal_gebruikers", "gebruikende_organisaties",
-            "aangemaakt_op", "gewijzigd_op",
+            "id",
+            "naam",
+            "versie",
+            "status",
+            "status_display",
+            "beschrijving",
+            "leverancier",
+            "licentievorm",
+            "licentievorm_display",
+            "open_source_licentie",
+            "website_url",
+            "documentatie_url",
+            "cloud_provider",
+            "contactpersoon",
+            "standaarden",
+            "gemma_componenten",
+            "aantal_gebruikers",
+            "gebruikende_organisaties",
+            "aangemaakt_op",
+            "gewijzigd_op",
         ]
         read_only_fields = ["id", "aangemaakt_op", "gewijzigd_op"]
 
     def get_gebruikende_organisaties(self, obj):
-        gebruik = obj.pakketgebruik_set.filter(
-            status="in_gebruik"
-        ).select_related("organisatie")[:20]
-        return [
-            {"id": str(g.organisatie.id), "naam": g.organisatie.naam}
-            for g in gebruik
-        ]
+        gebruik = obj.pakketgebruik_set.filter(status="in_gebruik").select_related("organisatie")[:20]
+        return [{"id": str(g.organisatie.id), "naam": g.organisatie.naam} for g in gebruik]
 
 
 class PakketCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer voor aanmaken/bewerken van pakketten."""
+
     class Meta:
         model = Pakket
         fields = [
-            "naam", "versie", "beschrijving", "leverancier",
-            "licentievorm", "open_source_licentie",
-            "website_url", "documentatie_url", "cloud_provider",
+            "naam",
+            "versie",
+            "beschrijving",
+            "leverancier",
+            "licentievorm",
+            "open_source_licentie",
+            "website_url",
+            "documentatie_url",
+            "cloud_provider",
             "contactpersoon",
         ]
 
@@ -78,6 +103,7 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
 
 class PakketGebruikSerializer(serializers.ModelSerializer):
     """Serializer voor pakketgebruik."""
+
     pakket_naam = serializers.CharField(source="pakket.naam", read_only=True)
     organisatie_naam = serializers.CharField(source="organisatie.naam", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -85,9 +111,18 @@ class PakketGebruikSerializer(serializers.ModelSerializer):
     class Meta:
         model = PakketGebruik
         fields = [
-            "id", "pakket", "pakket_naam", "organisatie", "organisatie_naam",
-            "status", "status_display", "start_datum", "eind_datum",
-            "notitie", "aangemaakt_op", "gewijzigd_op",
+            "id",
+            "pakket",
+            "pakket_naam",
+            "organisatie",
+            "organisatie_naam",
+            "status",
+            "status_display",
+            "start_datum",
+            "eind_datum",
+            "notitie",
+            "aangemaakt_op",
+            "gewijzigd_op",
         ]
         read_only_fields = ["id", "organisatie", "aangemaakt_op", "gewijzigd_op"]
 
@@ -103,8 +138,12 @@ class KoppelingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Koppeling
         fields = [
-            "id", "van_pakket_gebruik", "naar_pakket_gebruik",
-            "type", "type_display", "beschrijving",
+            "id",
+            "van_pakket_gebruik",
+            "naar_pakket_gebruik",
+            "type",
+            "type_display",
+            "beschrijving",
             "aangemaakt_op",
         ]
         read_only_fields = ["id", "aangemaakt_op"]

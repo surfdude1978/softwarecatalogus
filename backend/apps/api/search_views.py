@@ -1,4 +1,5 @@
 """Zoek-endpoint dat Meilisearch gebruikt met ORM-fallback."""
+
 import logging
 
 from django.db.models import Count, Q
@@ -17,17 +18,9 @@ def _orm_zoek(query: str, licentievorm: str | None, offset: int, limit: int) -> 
 
     qs = (
         Pakket.objects.filter(status="actief")
-        .filter(
-            Q(naam__icontains=query)
-            | Q(beschrijving__icontains=query)
-            | Q(leverancier__naam__icontains=query)
-        )
+        .filter(Q(naam__icontains=query) | Q(beschrijving__icontains=query) | Q(leverancier__naam__icontains=query))
         .select_related("leverancier")
-        .annotate(
-            aantal_gebruikers_actief=Count(
-                "pakketgebruik", filter=Q(pakketgebruik__status="in_gebruik")
-            )
-        )
+        .annotate(aantal_gebruikers_actief=Count("pakketgebruik", filter=Q(pakketgebruik__status="in_gebruik")))
     )
 
     if licentievorm:

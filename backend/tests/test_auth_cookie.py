@@ -1,4 +1,5 @@
 """Tests voor cookie-gebaseerde JWT authenticatie (issue #6)."""
+
 import pytest
 from django.test import override_settings
 from django.urls import reverse
@@ -19,6 +20,7 @@ COOKIE_MODUS = {
 
 # ── OptionalJWTAuthentication ─────────────────────────────────────────────────
 
+
 class TestCookieAuthentication:
     """OptionalJWTAuthentication leest cookie of Authorization-header."""
 
@@ -35,17 +37,13 @@ class TestCookieAuthentication:
         assert response.data["email"] == gebruik_beheerder.email
 
     @override_settings(**COOKIE_MODUS)
-    def test_cookie_heeft_voorrang_boven_header(
-        self, api_client, gebruik_beheerder, functioneel_beheerder
-    ):
+    def test_cookie_heeft_voorrang_boven_header(self, api_client, gebruik_beheerder, functioneel_beheerder):
         """Als zowel cookie als header aanwezig zijn, wint het cookie."""
         refresh_cookie = RefreshToken.for_user(gebruik_beheerder)
         refresh_header = RefreshToken.for_user(functioneel_beheerder)
 
         api_client.cookies["swc_access"] = str(refresh_cookie.access_token)
-        api_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {refresh_header.access_token}"
-        )
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh_header.access_token}")
 
         url = reverse("api:profiel-mij")
         response = api_client.get(url)
@@ -57,9 +55,7 @@ class TestCookieAuthentication:
     def test_valback_naar_header_zonder_cookie(self, api_client, gebruik_beheerder):
         """Zonder cookie werkt de Authorization-header nog steeds."""
         refresh = RefreshToken.for_user(gebruik_beheerder)
-        api_client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
-        )
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         url = reverse("api:profiel-mij")
         response = api_client.get(url)
@@ -77,9 +73,7 @@ class TestCookieAuthentication:
         # Publiek endpoint moet nog steeds bereikbaar zijn
         assert response.status_code == 200
 
-    def test_cookie_auth_uitgeschakeld_negeert_cookie(
-        self, api_client, gebruik_beheerder
-    ):
+    def test_cookie_auth_uitgeschakeld_negeert_cookie(self, api_client, gebruik_beheerder):
         """Met JWT_AUTH_COOKIE_ENABLED=False wordt het cookie genegeerd."""
         refresh = RefreshToken.for_user(gebruik_beheerder)
         api_client.cookies["swc_access"] = str(refresh.access_token)
@@ -102,13 +96,12 @@ class TestCookieAuthentication:
 
 # ── LoginView ─────────────────────────────────────────────────────────────────
 
+
 class TestLoginCookies:
     """LoginView stelt HttpOnly-cookies in wanneer cookie-modus actief is."""
 
     @override_settings(**COOKIE_MODUS)
-    def test_login_stelt_access_en_refresh_cookie_in(
-        self, api_client, gebruik_beheerder
-    ):
+    def test_login_stelt_access_en_refresh_cookie_in(self, api_client, gebruik_beheerder):
         """Na geslaagde login zonder 2FA zijn swc_access en swc_refresh aanwezig."""
         url = reverse("api:login")
         response = api_client.post(
@@ -147,9 +140,7 @@ class TestLoginCookies:
         assert response.cookies["swc_access"]["samesite"] == "Strict"
 
     @override_settings(**COOKIE_MODUS)
-    def test_login_retourneert_ook_tokens_in_body(
-        self, api_client, gebruik_beheerder
-    ):
+    def test_login_retourneert_ook_tokens_in_body(self, api_client, gebruik_beheerder):
         """Tokens staan ook in de response body (backwards-compatibiliteit)."""
         url = reverse("api:login")
         response = api_client.post(
@@ -161,9 +152,7 @@ class TestLoginCookies:
         assert "access" in response.data
         assert "refresh" in response.data
 
-    def test_login_stelt_geen_cookies_in_zonder_instelling(
-        self, api_client, gebruik_beheerder
-    ):
+    def test_login_stelt_geen_cookies_in_zonder_instelling(self, api_client, gebruik_beheerder):
         """Met JWT_AUTH_COOKIE_ENABLED=False worden er geen JWT-cookies ingesteld."""
         url = reverse("api:login")
         response = api_client.post(
@@ -177,11 +166,10 @@ class TestLoginCookies:
         assert "swc_refresh" not in response.cookies
 
     @override_settings(**COOKIE_MODUS)
-    def test_login_2fa_stelt_geen_cookies_in(
-        self, api_client, gebruik_beheerder
-    ):
+    def test_login_2fa_stelt_geen_cookies_in(self, api_client, gebruik_beheerder):
         """Bij 2FA-redirect (temp_token stap) worden nog geen definitieve cookies ingesteld."""
         from django_otp.plugins.otp_totp.models import TOTPDevice
+
         gebruik_beheerder.totp_enabled = True
         gebruik_beheerder.save()
         TOTPDevice.objects.create(
@@ -203,6 +191,7 @@ class TestLoginCookies:
 
 
 # ── LogoutView ────────────────────────────────────────────────────────────────
+
 
 class TestLogoutCookies:
     """LogoutView wist cookies en accepteert refresh token uit cookie."""
@@ -236,9 +225,7 @@ class TestLogoutCookies:
         """In localStorage-modus werkt logout met refresh in de body."""
         refresh = RefreshToken.for_user(gebruik_beheerder)
         url = reverse("api:logout")
-        response = auth_client.post(
-            url, {"refresh": str(refresh)}, format="json"
-        )
+        response = auth_client.post(url, {"refresh": str(refresh)}, format="json")
 
         assert response.status_code == 200
 

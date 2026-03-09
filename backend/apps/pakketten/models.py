@@ -1,4 +1,5 @@
 """Modellen voor softwarepakketten, gebruik en koppelingen."""
+
 from django.db import models
 
 from apps.core.models import BaseModel
@@ -21,9 +22,7 @@ class Pakket(BaseModel):
 
     naam = models.CharField(max_length=255, verbose_name="Naam")
     versie = models.CharField(max_length=50, blank=True, verbose_name="Versie")
-    status = models.CharField(
-        max_length=15, choices=Status.choices, default=Status.CONCEPT, verbose_name="Status"
-    )
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.CONCEPT, verbose_name="Status")
     beschrijving = models.TextField(blank=True, verbose_name="Beschrijving")
     leverancier = models.ForeignKey(
         "organisaties.Organisatie",
@@ -35,8 +34,7 @@ class Pakket(BaseModel):
         max_length=15, choices=Licentievorm.choices, default=Licentievorm.COMMERCIEEL, verbose_name="Licentievorm"
     )
     open_source_licentie = models.CharField(
-        max_length=50, blank=True, verbose_name="Open source licentie",
-        help_text="Bijv. EUPL, MIT, GPL"
+        max_length=50, blank=True, verbose_name="Open source licentie", help_text="Bijv. EUPL, MIT, GPL"
     )
     website_url = models.URLField(blank=True, verbose_name="Website")
     documentatie_url = models.URLField(blank=True, verbose_name="Documentatie URL")
@@ -102,9 +100,7 @@ class PakketGebruik(BaseModel):
         related_name="pakketgebruik",
         verbose_name="Organisatie",
     )
-    status = models.CharField(
-        max_length=15, choices=Status.choices, default=Status.IN_GEBRUIK, verbose_name="Status"
-    )
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.IN_GEBRUIK, verbose_name="Status")
     start_datum = models.DateField(null=True, blank=True, verbose_name="Startdatum")
     eind_datum = models.DateField(null=True, blank=True, verbose_name="Einddatum")
     notitie = models.TextField(blank=True, verbose_name="Notitie")

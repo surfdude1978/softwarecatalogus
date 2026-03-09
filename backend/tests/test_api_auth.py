@@ -1,4 +1,5 @@
 """Tests voor authenticatie endpoints."""
+
 import pytest
 from django.urls import reverse
 
@@ -10,10 +11,13 @@ pytestmark = pytest.mark.django_db
 class TestLoginAPI:
     def test_login_zonder_2fa(self, api_client, gebruik_beheerder):
         url = reverse("api:login")
-        response = api_client.post(url, {
-            "email": "gebruik@utrecht.nl",
-            "password": "TestWachtwoord123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "email": "gebruik@utrecht.nl",
+                "password": "TestWachtwoord123!",
+            },
+        )
         assert response.status_code == 200
         assert response.data["totp_required"] is False
         assert "access" in response.data
@@ -23,10 +27,13 @@ class TestLoginAPI:
 
     def test_login_met_onjuist_wachtwoord(self, api_client, gebruik_beheerder):
         url = reverse("api:login")
-        response = api_client.post(url, {
-            "email": "gebruik@utrecht.nl",
-            "password": "FoutWachtwoord",
-        })
+        response = api_client.post(
+            url,
+            {
+                "email": "gebruik@utrecht.nl",
+                "password": "FoutWachtwoord",
+            },
+        )
         assert response.status_code == 401
         assert "Ongeldige inloggegevens" in response.data["detail"]
 
@@ -37,33 +44,43 @@ class TestLoginAPI:
 
     def test_login_inactieve_gebruiker(self, api_client, inactieve_gebruiker):
         url = reverse("api:login")
-        response = api_client.post(url, {
-            "email": "inactief@example.com",
-            "password": "TestWachtwoord123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "email": "inactief@example.com",
+                "password": "TestWachtwoord123!",
+            },
+        )
         assert response.status_code == 403
         assert "gedeactiveerd" in response.data["detail"]
 
     def test_login_wachtende_gebruiker(self, api_client, wachtend_gebruiker):
         url = reverse("api:login")
-        response = api_client.post(url, {
-            "email": "wachtend@example.com",
-            "password": "TestWachtwoord123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "email": "wachtend@example.com",
+                "password": "TestWachtwoord123!",
+            },
+        )
         assert response.status_code == 403
         assert "goedkeuring" in response.data["detail"]
 
     def test_login_met_2fa_retourneert_temp_token(self, api_client, gebruik_beheerder):
         from django_otp.plugins.otp_totp.models import TOTPDevice
+
         gebruik_beheerder.totp_enabled = True
         gebruik_beheerder.save()
         TOTPDevice.objects.create(user=gebruik_beheerder, confirmed=True, name="test")
 
         url = reverse("api:login")
-        response = api_client.post(url, {
-            "email": "gebruik@utrecht.nl",
-            "password": "TestWachtwoord123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "email": "gebruik@utrecht.nl",
+                "password": "TestWachtwoord123!",
+            },
+        )
         assert response.status_code == 200
         assert response.data["totp_required"] is True
         assert "temp_token" in response.data
@@ -127,6 +144,7 @@ class TestRegistratieAPI:
 class TestLogoutAPI:
     def test_logout(self, auth_client, gebruik_beheerder):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         refresh = RefreshToken.for_user(gebruik_beheerder)
         url = reverse("api:logout")
         response = auth_client.post(url, {"refresh": str(refresh)})
@@ -157,6 +175,7 @@ class TestWachtwoordResetAPI:
 # Tests: 2FA bypass preventie (issue #5)
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestTOTPBypassPrevention:
     """
     Verifieer dat een pre-2FA token (totp_pending=True) UITSLUITEND
@@ -168,6 +187,7 @@ class TestTOTPBypassPrevention:
     def temp_token(self, gebruik_beheerder):
         """Genereer een totp_pending token zoals de LoginView dat doet."""
         from rest_framework_simplejwt.tokens import RefreshToken
+
         gebruik_beheerder.totp_enabled = True
         gebruik_beheerder.save()
         token = RefreshToken.for_user(gebruik_beheerder)
@@ -181,9 +201,7 @@ class TestTOTPBypassPrevention:
         # Code is fout, maar het endpoint is bereikbaar (niet 401/403 op authenticatie)
         response = api_client.post(url, {"totp_code": "000000"})
         # 401 door ongeldige TOTP code is OK; 403 door permissie is NIET OK
-        assert response.status_code != 403, (
-            "totp_pending token moet het verify-totp endpoint kunnen bereiken"
-        )
+        assert response.status_code != 403, "totp_pending token moet het verify-totp endpoint kunnen bereiken"
 
     def test_temp_token_geblokkeerd_op_profiel_endpoint(self, api_client, temp_token):
         """Profiel endpoint weigert een pre-2FA token (403/401)."""
@@ -191,8 +209,7 @@ class TestTOTPBypassPrevention:
         url = reverse("api:profiel-mij")
         response = api_client.get(url)
         assert response.status_code in (401, 403), (
-            f"Verwacht 401/403 voor totp_pending token op /profiel/mij/, "
-            f"maar kreeg {response.status_code}"
+            f"Verwacht 401/403 voor totp_pending token op /profiel/mij/, maar kreeg {response.status_code}"
         )
 
     def test_temp_token_geblokkeerd_op_pakket_aanmaken(self, api_client, temp_token):
@@ -220,6 +237,7 @@ class TestTOTPBypassPrevention:
     def test_normaal_token_heeft_geen_totp_pending_claim(self, api_client, gebruik_beheerder):
         """Een normaal login token bevat géén totp_pending claim."""
         from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+
         refresh = RefreshToken.for_user(gebruik_beheerder)
         access_token = AccessToken(str(refresh.access_token))
         assert "totp_pending" not in access_token or not access_token.get("totp_pending", False)
@@ -242,9 +260,7 @@ class TestTOTPBypassPrevention:
         url = reverse("api:verify-totp")
         response = auth_client.post(url, {"totp_code": "000000"})
         # Een volledig geauthenticeerde gebruiker heeft de verify-stap niet nodig
-        assert response.status_code == 403, (
-            "Volledig ingelogd token moet worden geweigerd op verify-totp endpoint"
-        )
+        assert response.status_code == 403, "Volledig ingelogd token moet worden geweigerd op verify-totp endpoint"
 
     def test_publieke_get_endpoints_toegankelijk_met_temp_token(self, api_client, temp_token):
         """GET op publieke endpoints mag wél lukken met een totp_pending token (leesrechten)."""

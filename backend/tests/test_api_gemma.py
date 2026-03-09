@@ -1,4 +1,5 @@
 """Tests voor de GEMMA architectuurkaart API (issue #12)."""
+
 import pytest
 from django.urls import reverse
 
@@ -11,6 +12,7 @@ pytestmark = pytest.mark.django_db
 # ========================
 # GET /api/v1/gemma/kaart/
 # ========================
+
 
 class TestGemmaKaartView:
     """Architectuurkaart endpoint retourneert componenthiëarchie met pakketten."""
@@ -34,27 +36,21 @@ class TestGemmaKaartView:
         """Children worden genest binnen hun parent."""
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         kind_namen = [k["naam"] for k in zaaksysteem["kinderen"]]
         assert "Zaakafhandelservice" in kind_namen
 
     def test_verplichte_velden_aanwezig(self, api_client, gemma_component):
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        component = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        component = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         for veld in ["id", "naam", "archimate_id", "type", "type_display", "kinderen", "pakketten"]:
             assert veld in component, f"Veld '{veld}' ontbreekt"
 
     def test_pakketten_leeg_zonder_koppeling(self, api_client, gemma_component):
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         assert zaaksysteem["pakketten"] == []
 
     def test_actief_pakket_zichtbaar_anoniem(self, api_client, gemma_component, pakket):
@@ -62,9 +58,7 @@ class TestGemmaKaartView:
         PakketGemmaComponent.objects.create(pakket=pakket, gemma_component=gemma_component)
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         pakket_namen = [p["naam"] for p in zaaksysteem["pakketten"]]
         assert "Suite4Gemeenten" in pakket_namen
 
@@ -73,9 +67,7 @@ class TestGemmaKaartView:
         PakketGemmaComponent.objects.create(pakket=concept_pakket, gemma_component=gemma_component)
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         pakket_namen = [p["naam"] for p in zaaksysteem["pakketten"]]
         assert "NieuwPakket" not in pakket_namen
 
@@ -87,22 +79,16 @@ class TestGemmaKaartView:
         url = reverse("api:gemma-kaart")
         response = auth_client.get(url)
         assert response.status_code == 200
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         pakket_namen = [p["naam"] for p in zaaksysteem["pakketten"]]
         assert "Suite4Gemeenten" in pakket_namen
 
-    def test_status_gebruik_in_response(
-        self, auth_client, gemma_component, pakket, pakket_gebruik
-    ):
+    def test_status_gebruik_in_response(self, auth_client, gemma_component, pakket, pakket_gebruik):
         """Status_gebruik van het pakketgebruik is opgenomen."""
         PakketGemmaComponent.objects.create(pakket=pakket, gemma_component=gemma_component)
         url = reverse("api:gemma-kaart")
         response = auth_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         suite = next(p for p in zaaksysteem["pakketten"] if p["naam"] == "Suite4Gemeenten")
         assert suite["status_gebruik"] == "in_gebruik"
 
@@ -112,29 +98,24 @@ class TestGemmaKaartView:
         """Pakketgebruik van andere organisatie is niet zichtbaar."""
         PakketGemmaComponent.objects.create(pakket=pakket, gemma_component=gemma_component)
         # Pakket van gemeente2
-        PakketGebruik.objects.create(
-            pakket=pakket, organisatie=gemeente2, status=PakketGebruik.Status.IN_GEBRUIK
-        )
+        PakketGebruik.objects.create(pakket=pakket, organisatie=gemeente2, status=PakketGebruik.Status.IN_GEBRUIK)
         url = reverse("api:gemma-kaart")
         response = auth_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         # Eigen organisatie (gemeente) heeft geen pakketgebruik -> leeg
         assert zaaksysteem["pakketten"] == []
 
     def test_type_display_aanwezig(self, api_client, gemma_component):
         url = reverse("api:gemma-kaart")
         response = api_client.get(url)
-        zaaksysteem = next(
-            c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem"
-        )
+        zaaksysteem = next(c for c in response.data["componenten"] if c["naam"] == "Zaaksysteem")
         assert zaaksysteem["type_display"] == "Applicatiecomponent"
 
 
 # ========================
 # GET /api/v1/gemma/componenten/ (bestaande endpoint)
 # ========================
+
 
 class TestGemmaComponentenAPI:
     def test_lijst_root_componenten(self, api_client, gemma_component, gemma_child):

@@ -1,4 +1,5 @@
 """Tests voor custom permission classes."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -34,6 +35,7 @@ def _make_request(user, method="GET", totp_pending=False):
 # IsAanbodBeheerder
 # ========================
 
+
 class TestIsAanbodBeheerder:
     def test_safe_methods_altijd_toegestaan(self, gebruiker_publiek):
         perm = IsAanbodBeheerder()
@@ -64,6 +66,7 @@ class TestIsAanbodBeheerder:
     def test_object_permission_andere_leverancier(self, aanbod_beheerder, db):
         from apps.organisaties.models import Organisatie
         from apps.pakketten.models import Pakket
+
         andere_lev = Organisatie.objects.create(naam="Andere", type="leverancier", status="actief")
         ander_pakket = Pakket.objects.create(naam="X", leverancier=andere_lev)
         perm = IsAanbodBeheerder()
@@ -74,6 +77,7 @@ class TestIsAanbodBeheerder:
 # ========================
 # IsGebruikBeheerder
 # ========================
+
 
 class TestIsGebruikBeheerder:
     def test_read_als_ingelogd(self, gebruik_beheerder):
@@ -108,6 +112,7 @@ class TestIsGebruikBeheerder:
 # IsFunctioneelBeheerder
 # ========================
 
+
 class TestIsFunctioneelBeheerder:
     def test_functioneel_beheerder_heeft_toegang(self, functioneel_beheerder):
         perm = IsFunctioneelBeheerder()
@@ -131,6 +136,7 @@ class TestIsFunctioneelBeheerder:
 # IsEigenOrganisatie
 # ========================
 
+
 class TestIsEigenOrganisatie:
     def test_safe_methods_altijd_toegestaan(self, gebruik_beheerder, pakket):
         perm = IsEigenOrganisatie()
@@ -144,9 +150,8 @@ class TestIsEigenOrganisatie:
 
     def test_andere_organisatie_verboden(self, gebruik_beheerder, pakket, gemeente2):
         from apps.pakketten.models import PakketGebruik
-        ander_gebruik = PakketGebruik.objects.create(
-            pakket=pakket, organisatie=gemeente2, status="in_gebruik"
-        )
+
+        ander_gebruik = PakketGebruik.objects.create(pakket=pakket, organisatie=gemeente2, status="in_gebruik")
         perm = IsEigenOrganisatie()
         request = _make_request(gebruik_beheerder, "PUT")
         assert perm.has_object_permission(request, None, ander_gebruik) is False
@@ -160,6 +165,7 @@ class TestIsEigenOrganisatie:
 # ───────────────────────────────────────────────────────────────────────────
 # Tests: 2FA-bewuste permissieklassen (issue #5)
 # ───────────────────────────────────────────────────────────────────────────
+
 
 class TestIsFullyAuthenticated:
     def test_volledig_ingelogd_heeft_toegang(self, gebruik_beheerder):

@@ -1,4 +1,5 @@
 """Pytest fixtures voor de Softwarecatalogus backend tests."""
+
 import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -13,6 +14,7 @@ from apps.standaarden.models import Standaard
 # ========================
 # Organisaties
 # ========================
+
 
 @pytest.fixture
 def gemeente(db):
@@ -56,6 +58,7 @@ def concept_organisatie(db):
 # ========================
 # Users
 # ========================
+
 
 @pytest.fixture
 def gebruiker_publiek(db, gemeente):
@@ -132,6 +135,7 @@ def wachtend_gebruiker(db, gemeente):
 # API Client helpers
 # ========================
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
@@ -164,6 +168,7 @@ def admin_client(api_client, functioneel_beheerder):
 # ========================
 # Pakketten
 # ========================
+
 
 @pytest.fixture
 def pakket(db, leverancier):
@@ -221,6 +226,7 @@ def pakket_gebruik2(db, pakket2, gemeente):
 # Standaarden
 # ========================
 
+
 @pytest.fixture
 def standaard(db):
     return Standaard.objects.create(
@@ -243,6 +249,7 @@ def standaard2(db):
 # ========================
 # GEMMA Componenten
 # ========================
+
 
 @pytest.fixture
 def gemma_component(db):
@@ -268,6 +275,7 @@ def gemma_child(db, gemma_component):
 # Content
 # ========================
 
+
 @pytest.fixture
 def pagina(db):
     return Pagina.objects.create(
@@ -281,6 +289,7 @@ def pagina(db):
 @pytest.fixture
 def nieuwsbericht(db):
     from django.utils import timezone
+
     return Nieuwsbericht.objects.create(
         titel="Nieuwe versie beschikbaar",
         slug="nieuwe-versie",

@@ -1,4 +1,5 @@
 """App configuratie voor TenderNed aanbestedingen integratie."""
+
 from django.apps import AppConfig
 
 

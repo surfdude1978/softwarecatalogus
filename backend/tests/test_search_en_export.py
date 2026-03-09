@@ -1,4 +1,5 @@
 """Tests voor zoek- en export-views."""
+
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +13,7 @@ pytestmark = pytest.mark.django_db
 # ─────────────────────────────────────────────────────────────────
 # Tests: ZoekView (Meilisearch)
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestZoekView:
     """Tests voor /api/v1/zoeken/ endpoint (Meilisearch-backed)."""
@@ -31,9 +33,7 @@ class TestZoekView:
         assert "q" in response.data["detail"].lower() or "zoekterm" in response.data["detail"].lower()
 
     def test_zoeken_met_query_geeft_resultaten(self, api_client):
-        mock_result = self._mock_search_result([
-            {"id": "1", "naam": "Suite4Gemeenten", "status": "actief"}
-        ])
+        mock_result = self._mock_search_result([{"id": "1", "naam": "Suite4Gemeenten", "status": "actief"}])
         with patch("apps.api.search_views.search_pakketten", return_value=mock_result):
             url = reverse("api:zoek")
             response = api_client.get(url, {"q": "Suite"})
@@ -58,8 +58,7 @@ class TestZoekView:
 
         # Controleer dat de filter doorgegeven is
         call_args = mock_fn.call_args
-        assert 'saas' in call_args.kwargs.get("filters", "") or \
-               (call_args.args and 'saas' in str(call_args.args))
+        assert "saas" in call_args.kwargs.get("filters", "") or (call_args.args and "saas" in str(call_args.args))
 
     def test_zoeken_met_leverancier_filter(self, api_client, leverancier):
         mock_result = self._mock_search_result()
@@ -68,8 +67,9 @@ class TestZoekView:
             api_client.get(url, {"q": "test", "leverancier": str(leverancier.pk)})
 
         call_args = mock_fn.call_args
-        assert str(leverancier.pk) in call_args.kwargs.get("filters", "") or \
-               (call_args.args and str(leverancier.pk) in str(call_args.args))
+        assert str(leverancier.pk) in call_args.kwargs.get("filters", "") or (
+            call_args.args and str(leverancier.pk) in str(call_args.args)
+        )
 
     def test_zoeken_met_standaard_filter(self, api_client, standaard):
         mock_result = self._mock_search_result()
@@ -78,8 +78,9 @@ class TestZoekView:
             api_client.get(url, {"q": "test", "standaard": str(standaard.pk)})
 
         call_args = mock_fn.call_args
-        assert str(standaard.pk) in call_args.kwargs.get("filters", "") or \
-               (call_args.args and str(standaard.pk) in str(call_args.args))
+        assert str(standaard.pk) in call_args.kwargs.get("filters", "") or (
+            call_args.args and str(standaard.pk) in str(call_args.args)
+        )
 
     def test_zoeken_met_gemma_component_filter(self, api_client, gemma_component):
         mock_result = self._mock_search_result()
@@ -88,8 +89,9 @@ class TestZoekView:
             api_client.get(url, {"q": "test", "gemma_component": str(gemma_component.pk)})
 
         call_args = mock_fn.call_args
-        assert str(gemma_component.pk) in call_args.kwargs.get("filters", "") or \
-               (call_args.args and str(gemma_component.pk) in str(call_args.args))
+        assert str(gemma_component.pk) in call_args.kwargs.get("filters", "") or (
+            call_args.args and str(gemma_component.pk) in str(call_args.args)
+        )
 
     def test_zoeken_met_sort_naam_asc(self, api_client):
         mock_result = self._mock_search_result()
@@ -108,10 +110,8 @@ class TestZoekView:
             api_client.get(url, {"q": "test", "offset": "10", "limit": "5"})
 
         call_args = mock_fn.call_args
-        assert call_args.kwargs.get("offset") == 10 or \
-               (call_args.args and 10 in call_args.args)
-        assert call_args.kwargs.get("limit") == 5 or \
-               (call_args.args and 5 in call_args.args)
+        assert call_args.kwargs.get("offset") == 10 or (call_args.args and 10 in call_args.args)
+        assert call_args.kwargs.get("limit") == 5 or (call_args.args and 5 in call_args.args)
 
     def test_zoeken_ongeldige_paginatie_gebruikt_defaults(self, api_client):
         mock_result = self._mock_search_result()
@@ -148,6 +148,7 @@ class TestZoekView:
 # ─────────────────────────────────────────────────────────────────
 # Tests: Export views – pakketten
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestExportPakkettenCSV:
     def test_export_pakketten_csv_succes(self, api_client, pakket):
@@ -214,6 +215,7 @@ class TestExportPakkettenExcel:
 # Tests: Export views – pakketoverzicht (authenticatie vereist)
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestExportPakketOverzicht:
     def test_export_overzicht_csv_vereist_auth(self, api_client):
         url = reverse("api:export-overzicht-csv")
@@ -232,6 +234,7 @@ class TestExportPakketOverzicht:
 
     def test_export_overzicht_csv_zonder_organisatie(self, api_client, functioneel_beheerder):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         # Functioneel beheerder heeft geen organisatie
         refresh = RefreshToken.for_user(functioneel_beheerder)
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
@@ -260,6 +263,7 @@ class TestExportPakketOverzicht:
 
     def test_export_overzicht_excel_zonder_organisatie(self, api_client, functioneel_beheerder):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         refresh = RefreshToken.for_user(functioneel_beheerder)
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
         url = reverse("api:export-overzicht-xlsx")
@@ -274,6 +278,7 @@ class TestExportPakketOverzicht:
 
     def test_export_overzicht_ameff_zonder_organisatie(self, api_client, functioneel_beheerder):
         from rest_framework_simplejwt.tokens import RefreshToken
+
         refresh = RefreshToken.for_user(functioneel_beheerder)
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
         url = reverse("api:export-overzicht-ameff")

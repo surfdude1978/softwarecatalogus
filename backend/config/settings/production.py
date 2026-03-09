@@ -1,4 +1,5 @@
 """Production settings."""
+
 from decouple import config as env_config
 
 from .base import *  # noqa: F401, F403
@@ -7,7 +8,7 @@ DEBUG = False
 
 # ── HTTPS en HSTS (nl.internet.nl vereisten) ──────────────────────────────
 SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000          # 1 jaar
+SECURE_HSTS_SECONDS = 31536000  # 1 jaar
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -21,8 +22,8 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
 
 # ── Browser beveiligingsheaders ────────────────────────────────────────────
-SECURE_CONTENT_TYPE_NOSNIFF = True       # X-Content-Type-Options: nosniff
-X_FRAME_OPTIONS = "DENY"                 # X-Frame-Options: DENY
+SECURE_CONTENT_TYPE_NOSNIFF = True  # X-Content-Type-Options: nosniff
+X_FRAME_OPTIONS = "DENY"  # X-Frame-Options: DENY
 
 # ── Cookie-gebaseerde JWT auth (veilig in productie) ──────────────────────
 JWT_AUTH_COOKIE_ENABLED = True

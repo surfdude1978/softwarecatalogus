@@ -1,4 +1,5 @@
 """Admin registraties voor core app."""
+
 from django.contrib import admin
 
 from .audit import AuditLog
@@ -19,9 +20,17 @@ class AuditLogAdmin(admin.ModelAdmin):
     list_filter = ["actie", "object_type", "tijdstip"]
     search_fields = ["actor_email", "object_omschrijving", "object_id", "ip_adres"]
     readonly_fields = [
-        "actor_id", "actor_email", "actie", "object_type", "object_id",
-        "object_omschrijving", "wijzigingen", "extra", "ip_adres",
-        "user_agent", "tijdstip",
+        "actor_id",
+        "actor_email",
+        "actie",
+        "object_type",
+        "object_id",
+        "object_omschrijving",
+        "wijzigingen",
+        "extra",
+        "ip_adres",
+        "user_agent",
+        "tijdstip",
     ]
     ordering = ["-tijdstip"]
     date_hierarchy = "tijdstip"

@@ -8,6 +8,7 @@ Gebruik:
     python manage.py migrate_from_drupal /pad/naar/export/ --dry-run
     python manage.py migrate_from_drupal /pad/naar/export/
 """
+
 import csv
 import logging
 import os
@@ -350,12 +351,8 @@ class Command(BaseCommand):
                     self.stats["koppelingen"]["skipped"] += 1
                     continue
 
-                van_gebruik = PakketGebruik.objects.filter(
-                    pakket=van_pakket, organisatie=organisatie
-                ).first()
-                naar_gebruik = PakketGebruik.objects.filter(
-                    pakket=naar_pakket, organisatie=organisatie
-                ).first()
+                van_gebruik = PakketGebruik.objects.filter(pakket=van_pakket, organisatie=organisatie).first()
+                naar_gebruik = PakketGebruik.objects.filter(pakket=naar_pakket, organisatie=organisatie).first()
 
                 if not van_gebruik or not naar_gebruik:
                     self.stats["koppelingen"]["skipped"] += 1

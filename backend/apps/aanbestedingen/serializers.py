@@ -1,4 +1,5 @@
 """Serializers voor TenderNed aanbestedingen."""
+
 from rest_framework import serializers
 
 from apps.architectuur.serializers import GemmaComponentListSerializer
@@ -12,9 +13,7 @@ class AanbestedingenListSerializer(serializers.ModelSerializer):
 
     gemma_component_namen = serializers.SerializerMethodField()
     primaire_cpv = serializers.ReadOnlyField()
-    aanbestedende_dienst_naam = serializers.CharField(
-        source="aanbestedende_dienst", read_only=True
-    )
+    aanbestedende_dienst_naam = serializers.CharField(source="aanbestedende_dienst", read_only=True)
 
     class Meta:
         model = Aanbesteding

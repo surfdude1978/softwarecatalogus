@@ -1,4 +1,5 @@
 """Serializers voor CMS content."""
+
 from rest_framework import serializers
 
 from .models import Nieuwsbericht, Pagina
@@ -21,8 +22,15 @@ class NieuwsberichtDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Nieuwsbericht
         fields = [
-            "id", "titel", "slug", "samenvatting", "inhoud",
-            "afbeelding", "gepubliceerd", "publicatie_datum",
-            "aangemaakt_op", "gewijzigd_op",
+            "id",
+            "titel",
+            "slug",
+            "samenvatting",
+            "inhoud",
+            "afbeelding",
+            "gepubliceerd",
+            "publicatie_datum",
+            "aangemaakt_op",
+            "gewijzigd_op",
         ]
         read_only_fields = ["id", "aangemaakt_op", "gewijzigd_op"]

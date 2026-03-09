@@ -1,4 +1,5 @@
 """Tests voor ArchiMate AMEFF import en export."""
+
 import pytest
 
 from apps.architectuur.ameff_export import generate_ameff
@@ -57,6 +58,7 @@ SAMPLE_AMEFF_RENAMED = """<?xml version="1.0" encoding="UTF-8"?>
 # Parse tests
 # ========================
 
+
 class TestParseAMEFF:
     def test_parse_elementen(self):
         result = parse_ameff(SAMPLE_AMEFF)
@@ -93,6 +95,7 @@ class TestParseAMEFF:
 # ========================
 # Import tests
 # ========================
+
 
 class TestImportAMEFF:
     def test_import_maakt_componenten_aan(self):
@@ -152,12 +155,13 @@ class TestImportAMEFF:
 # Export tests
 # ========================
 
+
 class TestGenerateAMEFF:
     def test_export_bevat_xml_declaratie(self, pakket, pakket_gebruik, gemma_component):
         PakketGemmaComponent.objects.create(pakket=pakket, gemma_component=gemma_component)
         result = generate_ameff(organisatie_id=pakket_gebruik.organisatie.id)
-        assert '<?xml' in result
-        assert 'archimate' in result.lower()
+        assert "<?xml" in result
+        assert "archimate" in result.lower()
 
     def test_export_bevat_gemma_componenten(self, pakket, pakket_gebruik, gemma_component):
         PakketGemmaComponent.objects.create(pakket=pakket, gemma_component=gemma_component)
@@ -177,7 +181,7 @@ class TestGenerateAMEFF:
 
     def test_export_zonder_pakketten(self, gemeente):
         result = generate_ameff(organisatie_id=gemeente.id)
-        assert '<?xml' in result
+        assert "<?xml" in result
         # Lege export is wel geldig XML
 
     def test_export_alleen_in_gebruik(self, pakket, pakket2, gemeente, gemma_component):

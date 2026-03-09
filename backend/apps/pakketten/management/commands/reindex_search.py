@@ -1,4 +1,5 @@
 """Management command voor het herindexeren van Meilisearch."""
+
 from django.core.management.base import BaseCommand
 
 from apps.pakketten.search import reindex_all

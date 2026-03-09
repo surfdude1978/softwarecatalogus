@@ -13,6 +13,7 @@ from apps.gebruikers.serializers import UserProfileSerializer, UserRegistratieSe
 
 # ── Cookie-helpers ────────────────────────────────────────────────────────────
 
+
 def _cookie_auth_actief() -> bool:
     """Geeft True terug als cookie-gebaseerde JWT-auth is ingeschakeld."""
     return getattr(settings, "JWT_AUTH_COOKIE_ENABLED", False)
@@ -68,6 +69,7 @@ def _wis_auth_cookies(response) -> None:
 
 # ── Views ─────────────────────────────────────────────────────────────────────
 
+
 class LoginView(APIView):
     """
     Stap 1 van login: e-mail + wachtwoord.
@@ -75,6 +77,7 @@ class LoginView(APIView):
     of direct JWT tokens als 2FA niet is ingeschakeld.
     In cookie-modus worden de tokens tevens als HttpOnly-cookie ingesteld.
     """
+
     permission_classes = [AllowAny]
 
     def dispatch(self, request, *args, **kwargs):
@@ -115,20 +118,24 @@ class LoginView(APIView):
             # Genereer tijdelijk token voor 2FA verificatie
             temp_token = RefreshToken.for_user(user)
             temp_token["totp_pending"] = True
-            return Response({
-                "totp_required": True,
-                "temp_token": str(temp_token.access_token),
-            })
+            return Response(
+                {
+                    "totp_required": True,
+                    "temp_token": str(temp_token.access_token),
+                }
+            )
 
         # Geen 2FA: direct inloggen
         refresh = RefreshToken.for_user(user)
         access = str(refresh.access_token)
-        response = Response({
-            "totp_required": False,
-            "access": access,
-            "refresh": str(refresh),
-            "user": UserProfileSerializer(user).data,
-        })
+        response = Response(
+            {
+                "totp_required": False,
+                "access": access,
+                "refresh": str(refresh),
+                "user": UserProfileSerializer(user).data,
+            }
+        )
         _stel_auth_cookies_in(response, access, str(refresh))
         return response
 
@@ -141,6 +148,7 @@ class VerifyTOTPView(APIView):
     Na succesvolle verificatie worden normale access/refresh tokens uitgegeven.
     In cookie-modus worden de tokens tevens als HttpOnly-cookie ingesteld.
     """
+
     permission_classes = [IsTOTPPending]
 
     def post(self, request):
@@ -168,17 +176,20 @@ class VerifyTOTPView(APIView):
 
         refresh = RefreshToken.for_user(user)
         access = str(refresh.access_token)
-        response = Response({
-            "access": access,
-            "refresh": str(refresh),
-            "user": UserProfileSerializer(user).data,
-        })
+        response = Response(
+            {
+                "access": access,
+                "refresh": str(refresh),
+                "user": UserProfileSerializer(user).data,
+            }
+        )
         _stel_auth_cookies_in(response, access, str(refresh))
         return response
 
 
 class RegistratieView(APIView):
     """Gebruikersregistratie."""
+
     permission_classes = [AllowAny]
 
     def dispatch(self, request, *args, **kwargs):
@@ -204,15 +215,14 @@ class LogoutView(APIView):
     In cookie-modus wordt het refresh token uit de cookie gelezen en worden
     beide cookies gewist.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         # Lees refresh token uit request body; val terug op cookie in cookie-modus
         refresh_token = request.data.get("refresh")
         if not refresh_token and _cookie_auth_actief():
-            refresh_token = request.COOKIES.get(
-                getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh")
-            )
+            refresh_token = request.COOKIES.get(getattr(settings, "JWT_AUTH_REFRESH_COOKIE", "swc_refresh"))
 
         if refresh_token:
             try:
@@ -228,6 +238,7 @@ class LogoutView(APIView):
 
 class WachtwoordResetRequestView(APIView):
     """Wachtwoord reset aanvragen (stuurt e-mail)."""
+
     permission_classes = [AllowAny]
 
     def dispatch(self, request, *args, **kwargs):
@@ -244,13 +255,12 @@ class WachtwoordResetRequestView(APIView):
                 # send_password_reset_email.delay(_user.id)
             except User.DoesNotExist:
                 pass
-        return Response(
-            {"detail": "Als het e-mailadres bij ons bekend is, ontvangt u een reset-link."}
-        )
+        return Response({"detail": "Als het e-mailadres bij ons bekend is, ontvangt u een reset-link."})
 
 
 class TOTPSetupView(APIView):
     """2FA TOTP setup: genereer een nieuw TOTP device met QR code."""
+
     permission_classes = [IsFullyAuthenticated]
 
     def post(self, request):
@@ -265,10 +275,12 @@ class TOTPSetupView(APIView):
         )
 
         config_url = device.config_url
-        return Response({
-            "config_url": config_url,
-            "detail": "Scan de QR code met uw authenticator app en bevestig met een code.",
-        })
+        return Response(
+            {
+                "config_url": config_url,
+                "detail": "Scan de QR code met uw authenticator app en bevestig met een code.",
+            }
+        )
 
     def put(self, request):
         """Bevestig TOTP setup met een code."""

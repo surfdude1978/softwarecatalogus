@@ -1,4 +1,5 @@
 """Export views voor CSV, Excel en AMEFF."""
+
 import csv
 import io
 from datetime import datetime
@@ -15,6 +16,7 @@ from apps.pakketten.models import Pakket, PakketGebruik
 
 class ExportPakkettenCSV(APIView):
     """Exporteer pakketten als CSV."""
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -23,32 +25,41 @@ class ExportPakkettenCSV(APIView):
         response.write("\ufeff")  # BOM voor Excel compatibiliteit
 
         writer = csv.writer(response, delimiter=";")
-        writer.writerow([
-            "Naam", "Versie", "Status", "Leverancier", "Licentievorm",
-            "Website", "Beschrijving", "Aantal gemeenten",
-        ])
+        writer.writerow(
+            [
+                "Naam",
+                "Versie",
+                "Status",
+                "Leverancier",
+                "Licentievorm",
+                "Website",
+                "Beschrijving",
+                "Aantal gemeenten",
+            ]
+        )
 
-        pakketten = Pakket.objects.filter(
-            status__in=["actief", "concept"]
-        ).select_related("leverancier")
+        pakketten = Pakket.objects.filter(status__in=["actief", "concept"]).select_related("leverancier")
 
         for p in pakketten:
-            writer.writerow([
-                p.naam,
-                p.versie,
-                p.get_status_display(),
-                p.leverancier.naam if p.leverancier else "",
-                p.get_licentievorm_display(),
-                p.website_url,
-                p.beschrijving[:500],
-                p.pakketgebruik_set.filter(status="in_gebruik").count(),
-            ])
+            writer.writerow(
+                [
+                    p.naam,
+                    p.versie,
+                    p.get_status_display(),
+                    p.leverancier.naam if p.leverancier else "",
+                    p.get_licentievorm_display(),
+                    p.website_url,
+                    p.beschrijving[:500],
+                    p.pakketgebruik_set.filter(status="in_gebruik").count(),
+                ]
+            )
 
         return response
 
 
 class ExportPakkettenExcel(APIView):
     """Exporteer pakketten als Excel (.xlsx)."""
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -61,28 +72,34 @@ class ExportPakkettenExcel(APIView):
 
         # Header
         headers = [
-            "Naam", "Versie", "Status", "Leverancier", "Licentievorm",
-            "Website", "Beschrijving", "Aantal gemeenten",
+            "Naam",
+            "Versie",
+            "Status",
+            "Leverancier",
+            "Licentievorm",
+            "Website",
+            "Beschrijving",
+            "Aantal gemeenten",
         ]
         ws.append(headers)
         for cell in ws[1]:
             cell.font = Font(bold=True)
 
-        pakketten = Pakket.objects.filter(
-            status__in=["actief", "concept"]
-        ).select_related("leverancier")
+        pakketten = Pakket.objects.filter(status__in=["actief", "concept"]).select_related("leverancier")
 
         for p in pakketten:
-            ws.append([
-                p.naam,
-                p.versie,
-                p.get_status_display(),
-                p.leverancier.naam if p.leverancier else "",
-                p.get_licentievorm_display(),
-                p.website_url,
-                p.beschrijving[:500],
-                p.pakketgebruik_set.filter(status="in_gebruik").count(),
-            ])
+            ws.append(
+                [
+                    p.naam,
+                    p.versie,
+                    p.get_status_display(),
+                    p.leverancier.naam if p.leverancier else "",
+                    p.get_licentievorm_display(),
+                    p.website_url,
+                    p.beschrijving[:500],
+                    p.pakketgebruik_set.filter(status="in_gebruik").count(),
+                ]
+            )
 
         # Auto-breedte kolommen
         for col in ws.columns:
@@ -103,6 +120,7 @@ class ExportPakkettenExcel(APIView):
 
 class ExportPakketOverzichtCSV(APIView):
     """Exporteer eigen pakketoverzicht als CSV."""
+
     permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
@@ -119,19 +137,21 @@ class ExportPakketOverzichtCSV(APIView):
         writer = csv.writer(response, delimiter=";")
         writer.writerow(["Pakket", "Versie", "Status gebruik", "Leverancier", "Startdatum", "Notitie"])
 
-        gebruik = PakketGebruik.objects.filter(
-            organisatie=user.organisatie
-        ).select_related("pakket", "pakket__leverancier")
+        gebruik = PakketGebruik.objects.filter(organisatie=user.organisatie).select_related(
+            "pakket", "pakket__leverancier"
+        )
 
         for pg in gebruik:
-            writer.writerow([
-                pg.pakket.naam,
-                pg.pakket.versie,
-                pg.get_status_display(),
-                pg.pakket.leverancier.naam if pg.pakket.leverancier else "",
-                pg.start_datum.isoformat() if pg.start_datum else "",
-                pg.notitie,
-            ])
+            writer.writerow(
+                [
+                    pg.pakket.naam,
+                    pg.pakket.versie,
+                    pg.get_status_display(),
+                    pg.pakket.leverancier.naam if pg.pakket.leverancier else "",
+                    pg.start_datum.isoformat() if pg.start_datum else "",
+                    pg.notitie,
+                ]
+            )
 
         log_actie(
             request,
@@ -147,6 +167,7 @@ class ExportPakketOverzichtCSV(APIView):
 
 class ExportPakketOverzichtExcel(APIView):
     """Exporteer eigen pakketoverzicht als Excel (.xlsx)."""
+
     permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
@@ -175,9 +196,15 @@ class ExportPakketOverzichtExcel(APIView):
 
         # Header
         headers = [
-            "Pakket", "Versie", "Leverancier", "Status gebruik",
-            "Startdatum", "Einddatum", "Notitie",
-            "GEMMA-componenten", "Standaarden",
+            "Pakket",
+            "Versie",
+            "Leverancier",
+            "Status gebruik",
+            "Startdatum",
+            "Einddatum",
+            "Notitie",
+            "GEMMA-componenten",
+            "Standaarden",
         ]
         header_row = ws.max_row + 1
         ws.append(headers)
@@ -188,33 +215,32 @@ class ExportPakketOverzichtExcel(APIView):
             cell.alignment = Alignment(horizontal="center")
 
         # Data
-        gebruik = PakketGebruik.objects.filter(
-            organisatie=user.organisatie
-        ).select_related(
-            "pakket", "pakket__leverancier"
-        ).prefetch_related(
-            "pakket__gemma_componenten",
-            "pakket__standaarden",
-        ).order_by("pakket__naam")
+        gebruik = (
+            PakketGebruik.objects.filter(organisatie=user.organisatie)
+            .select_related("pakket", "pakket__leverancier")
+            .prefetch_related(
+                "pakket__gemma_componenten",
+                "pakket__standaarden",
+            )
+            .order_by("pakket__naam")
+        )
 
         for pg in gebruik:
-            gemma_namen = ", ".join(
-                gc.naam for gc in pg.pakket.gemma_componenten.all()
+            gemma_namen = ", ".join(gc.naam for gc in pg.pakket.gemma_componenten.all())
+            standaard_namen = ", ".join(s.naam for s in pg.pakket.standaarden.all())
+            ws.append(
+                [
+                    pg.pakket.naam,
+                    pg.pakket.versie or "",
+                    pg.pakket.leverancier.naam if pg.pakket.leverancier else "",
+                    pg.get_status_display(),
+                    pg.start_datum.strftime("%d-%m-%Y") if pg.start_datum else "",
+                    pg.eind_datum.strftime("%d-%m-%Y") if pg.eind_datum else "",
+                    pg.notitie or "",
+                    gemma_namen,
+                    standaard_namen,
+                ]
             )
-            standaard_namen = ", ".join(
-                s.naam for s in pg.pakket.standaarden.all()
-            )
-            ws.append([
-                pg.pakket.naam,
-                pg.pakket.versie or "",
-                pg.pakket.leverancier.naam if pg.pakket.leverancier else "",
-                pg.get_status_display(),
-                pg.start_datum.strftime("%d-%m-%Y") if pg.start_datum else "",
-                pg.eind_datum.strftime("%d-%m-%Y") if pg.eind_datum else "",
-                pg.notitie or "",
-                gemma_namen,
-                standaard_namen,
-            ])
 
         # Kolombreedtes aanpassen
         col_widths = [35, 12, 30, 15, 12, 12, 40, 40, 40]
@@ -241,6 +267,7 @@ class ExportPakketOverzichtExcel(APIView):
 
 class ExportPakketOverzichtAMEFF(APIView):
     """Exporteer eigen pakketoverzicht als AMEFF (ArchiMate Exchange)."""
+
     permission_classes = [IsFullyAuthenticated]
 
     def get(self, request):
@@ -318,30 +345,38 @@ class ExportAuditLogCSV(APIView):
 
         # ── Bouw CSV ─────────────────────────────────────────────────────────
         response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = (
-            f'attachment; filename="auditlog_{datetime.now():%Y%m%d_%H%M}.csv"'
-        )
+        response["Content-Disposition"] = f'attachment; filename="auditlog_{datetime.now():%Y%m%d_%H%M}.csv"'
         response.write("\ufeff")  # BOM voor Excel-compatibiliteit
 
         writer = csv.writer(response, delimiter=";")
-        writer.writerow([
-            "Tijdstip", "Actor e-mail", "Actor ID",
-            "Actie", "Object type", "Object ID", "Object",
-            "IP-adres", "User-agent",
-        ])
+        writer.writerow(
+            [
+                "Tijdstip",
+                "Actor e-mail",
+                "Actor ID",
+                "Actie",
+                "Object type",
+                "Object ID",
+                "Object",
+                "IP-adres",
+                "User-agent",
+            ]
+        )
 
         for entry in qs.order_by("-tijdstip"):
-            writer.writerow([
-                entry.tijdstip.strftime("%Y-%m-%d %H:%M:%S"),
-                entry.actor_email,
-                entry.actor_id or "",
-                entry.actie,
-                entry.object_type,
-                entry.object_id or "",
-                entry.object_omschrijving,
-                entry.ip_adres or "",
-                entry.user_agent[:100],
-            ])
+            writer.writerow(
+                [
+                    entry.tijdstip.strftime("%Y-%m-%d %H:%M:%S"),
+                    entry.actor_email,
+                    entry.actor_id or "",
+                    entry.actie,
+                    entry.object_type,
+                    entry.object_id or "",
+                    entry.object_omschrijving,
+                    entry.ip_adres or "",
+                    entry.user_agent[:100],
+                ]
+            )
 
         # Log de export zelf ook
         log_actie(

@@ -75,9 +75,17 @@ class Command(BaseCommand):
 
     def _clear_data(self):
         models = [
-            Notificatie, Koppeling, PakketGebruik, PakketStandaard,
-            PakketGemmaComponent, Pakket, Standaard, GemmaComponent,
-            Contactpersoon, Nieuwsbericht, Pagina,
+            Notificatie,
+            Koppeling,
+            PakketGebruik,
+            PakketStandaard,
+            PakketGemmaComponent,
+            Pakket,
+            Standaard,
+            GemmaComponent,
+            Contactpersoon,
+            Nieuwsbericht,
+            Pagina,
         ]
         for model in models:
             count = model.objects.count()
@@ -154,14 +162,12 @@ class Command(BaseCommand):
             ),
             (
                 "PinkRoccade Local Government",
-                "PinkRoccade ontwikkelt software voor gemeentelijke dienstverlening, "
-                "waaronder iNavigator en Civiqs.",
+                "PinkRoccade ontwikkelt software voor gemeentelijke dienstverlening, waaronder iNavigator en Civiqs.",
                 "https://www.pinkroccade-localgovernment.nl",
             ),
             (
                 "Atos",
-                "Atos biedt ICT-diensten en software voor de publieke sector, "
-                "inclusief e-Suite en Toptaak.",
+                "Atos biedt ICT-diensten en software voor de publieke sector, inclusief e-Suite en Toptaak.",
                 "https://www.atos.net",
             ),
             (
@@ -190,44 +196,37 @@ class Command(BaseCommand):
             ),
             (
                 "Conxillium",
-                "Conxillium levert financiele software en bedrijfsvoeringssystemen "
-                "voor gemeenten.",
+                "Conxillium levert financiele software en bedrijfsvoeringssystemen voor gemeenten.",
                 "https://www.conxillium.nl",
             ),
             (
                 "BCT",
-                "BCT ontwikkelt Corsa voor document- en informatiemanagement bij "
-                "overheidsinstellingen.",
+                "BCT ontwikkelt Corsa voor document- en informatiemanagement bij overheidsinstellingen.",
                 "https://www.bct.nl",
             ),
             (
                 "Kodision",
-                "Kodision levert low-code oplossingen voor gemeentelijke processen "
-                "en zaakgericht werken.",
+                "Kodision levert low-code oplossingen voor gemeentelijke processen en zaakgericht werken.",
                 "https://www.kodision.com",
             ),
             (
                 "Procura",
-                "Procura ontwikkelt burgerzakensoftware (BRP, reisdocumenten, "
-                "rijbewijzen) voor gemeenten.",
+                "Procura ontwikkelt burgerzakensoftware (BRP, reisdocumenten, rijbewijzen) voor gemeenten.",
                 "https://www.procura.nl",
             ),
             (
                 "Lost Lemon",
-                "Lost Lemon ontwikkelt digitale formulieren en e-diensten voor "
-                "gemeentelijke dienstverlening.",
+                "Lost Lemon ontwikkelt digitale formulieren en e-diensten voor gemeentelijke dienstverlening.",
                 "https://www.lostlemon.nl",
             ),
             (
                 "Yard",
-                "Yard biedt digitale oplossingen voor overheidscommunicatie, "
-                "inclusief websites en intranetten.",
+                "Yard biedt digitale oplossingen voor overheidscommunicatie, inclusief websites en intranetten.",
                 "https://www.yard.nl",
             ),
             (
                 "Enable-U",
-                "Enable-U ontwikkelt integratieplatformen en API-management voor "
-                "gemeentelijke informatieketens.",
+                "Enable-U ontwikkelt integratieplatformen en API-management voor gemeentelijke informatieketens.",
                 "https://www.enable-u.com",
             ),
             (
@@ -364,7 +363,12 @@ class Command(BaseCommand):
             ("WMO-module", "GEMMA-AS-007", "Sociaal domein suite", "WMO aanvragen en toekenningen."),
             ("Jeugdzorgmodule", "GEMMA-AS-008", "Sociaal domein suite", "Jeugdzorg indicaties en trajecten."),
             ("WOZ-taxatiemodule", "GEMMA-AS-009", "Belastingsysteem", "WOZ waardebepalingen."),
-            ("Omgevingsvergunningmodule", "GEMMA-AS-010", "Vergunning Toezicht Handhaving", "Omgevingsvergunningaanvragen."),
+            (
+                "Omgevingsvergunningmodule",
+                "GEMMA-AS-010",
+                "Vergunning Toezicht Handhaving",
+                "Omgevingsvergunningaanvragen.",
+            ),
         ]
 
         for naam, archimate_id, parent_naam, beschrijving in sub_data:
@@ -389,42 +393,132 @@ class Command(BaseCommand):
 
     def _create_standaarden(self):
         standaard_data = [
-            ("DigiD", "verplicht", "4.0", "Digitale identiteit voor burgers bij overheidsdiensten.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/digid"),
-            ("StUF-BG", "verplicht", "3.10", "Standaard Uitwisseling Formaat voor basisgegevens.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/stuf"),
-            ("StUF-ZKN", "verplicht", "3.10", "StUF koppelvlak voor zaak- en documentservices.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/stuf"),
-            ("ZGW API's", "verplicht", "1.5", "Zaakgericht werken API-standaarden (ZRC, DRC, ZTC, BRC).",
-             "https://www.forumstandaardisatie.nl/open-standaarden/zgw-apis"),
-            ("CMIS", "aanbevolen", "1.1", "Content Management Interoperability Services voor documentuitwisseling.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/cmis"),
-            ("SAML", "verplicht", "2.0", "Security Assertion Markup Language voor single sign-on.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/saml"),
-            ("OAuth 2.0", "aanbevolen", "2.1", "Autorisatieprotocol voor API-toegang.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/oauth"),
-            ("NEN 2082", "verplicht", "2023", "Norm voor duurzame toegankelijkheid van informatie.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/nen-2082"),
-            ("OWMS", "verplicht", "4.0", "Overheid.nl Web Metadata Standaard.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/owms"),
-            ("Haal Centraal BRP", "aanbevolen", "2.0", "API voor het bevragen van de BRP.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/haal-centraal"),
-            ("OpenAPI Specification", "aanbevolen", "3.1", "Standaard voor het beschrijven van REST API's.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/openapi"),
-            ("WCAG", "verplicht", "2.1", "Web Content Accessibility Guidelines voor digitale toegankelijkheid.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/wcag"),
-            ("TLS", "verplicht", "1.3", "Transport Layer Security voor beveiligde communicatie.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/tls"),
-            ("HTTPS/HSTS", "verplicht", "1.0", "Veilige verbindingen met HTTP Strict Transport Security.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/https-en-hsts"),
-            ("IPv6", "verplicht", "6", "Internet Protocol versie 6.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/ipv6"),
-            ("Archimate", "aanbevolen", "3.2", "Modelleertaal voor enterprise architectuur.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/archimate"),
-            ("BPMN", "aanbevolen", "2.0", "Business Process Model and Notation voor procesbeschrijving.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/bpmn"),
-            ("GML", "verplicht", "3.2", "Geography Markup Language voor geo-informatie.",
-             "https://www.forumstandaardisatie.nl/open-standaarden/gml"),
+            (
+                "DigiD",
+                "verplicht",
+                "4.0",
+                "Digitale identiteit voor burgers bij overheidsdiensten.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/digid",
+            ),
+            (
+                "StUF-BG",
+                "verplicht",
+                "3.10",
+                "Standaard Uitwisseling Formaat voor basisgegevens.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/stuf",
+            ),
+            (
+                "StUF-ZKN",
+                "verplicht",
+                "3.10",
+                "StUF koppelvlak voor zaak- en documentservices.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/stuf",
+            ),
+            (
+                "ZGW API's",
+                "verplicht",
+                "1.5",
+                "Zaakgericht werken API-standaarden (ZRC, DRC, ZTC, BRC).",
+                "https://www.forumstandaardisatie.nl/open-standaarden/zgw-apis",
+            ),
+            (
+                "CMIS",
+                "aanbevolen",
+                "1.1",
+                "Content Management Interoperability Services voor documentuitwisseling.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/cmis",
+            ),
+            (
+                "SAML",
+                "verplicht",
+                "2.0",
+                "Security Assertion Markup Language voor single sign-on.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/saml",
+            ),
+            (
+                "OAuth 2.0",
+                "aanbevolen",
+                "2.1",
+                "Autorisatieprotocol voor API-toegang.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/oauth",
+            ),
+            (
+                "NEN 2082",
+                "verplicht",
+                "2023",
+                "Norm voor duurzame toegankelijkheid van informatie.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/nen-2082",
+            ),
+            (
+                "OWMS",
+                "verplicht",
+                "4.0",
+                "Overheid.nl Web Metadata Standaard.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/owms",
+            ),
+            (
+                "Haal Centraal BRP",
+                "aanbevolen",
+                "2.0",
+                "API voor het bevragen van de BRP.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/haal-centraal",
+            ),
+            (
+                "OpenAPI Specification",
+                "aanbevolen",
+                "3.1",
+                "Standaard voor het beschrijven van REST API's.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/openapi",
+            ),
+            (
+                "WCAG",
+                "verplicht",
+                "2.1",
+                "Web Content Accessibility Guidelines voor digitale toegankelijkheid.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/wcag",
+            ),
+            (
+                "TLS",
+                "verplicht",
+                "1.3",
+                "Transport Layer Security voor beveiligde communicatie.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/tls",
+            ),
+            (
+                "HTTPS/HSTS",
+                "verplicht",
+                "1.0",
+                "Veilige verbindingen met HTTP Strict Transport Security.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/https-en-hsts",
+            ),
+            (
+                "IPv6",
+                "verplicht",
+                "6",
+                "Internet Protocol versie 6.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/ipv6",
+            ),
+            (
+                "Archimate",
+                "aanbevolen",
+                "3.2",
+                "Modelleertaal voor enterprise architectuur.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/archimate",
+            ),
+            (
+                "BPMN",
+                "aanbevolen",
+                "2.0",
+                "Business Process Model and Notation voor procesbeschrijving.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/bpmn",
+            ),
+            (
+                "GML",
+                "verplicht",
+                "3.2",
+                "Geography Markup Language voor geo-informatie.",
+                "https://www.forumstandaardisatie.nl/open-standaarden/gml",
+            ),
         ]
 
         standaarden = {}
@@ -560,98 +654,308 @@ class Command(BaseCommand):
 
         pakket_data = [
             # (naam, versie, leverancier, licentievorm, beschrijving, website, cloud_provider, status)
-            ("Suite4Gemeenten", "5.2", "Centric", "saas",
-             "Integraal zaaksysteem voor gemeentelijke processen. Ondersteunt zaakgericht werken, "
-             "documentmanagement en klantcontact.",
-             "https://www.centric.eu/suite4gemeenten", "Microsoft Azure", "actief"),
-            ("Key2Burgerzaken", "8.1", "Centric", "saas",
-             "Burgerzakensoftware voor BRP-beheer, burgerlijke stand, reisdocumenten en rijbewijzen.",
-             "https://www.centric.eu/key2burgerzaken", "Microsoft Azure", "actief"),
-            ("Key2Financien", "7.5", "Centric", "saas",
-             "Financieel systeem voor gemeenten met begroting, boekhouding en verantwoording.",
-             "https://www.centric.eu/key2financien", "Microsoft Azure", "actief"),
-            ("iNavigator", "4.3", "PinkRoccade Local Government", "commercieel",
-             "Zaaksysteem en midoffice-oplossing voor gemeenten met procesondersteuning.",
-             "https://www.pinkroccade-localgovernment.nl/inavigator", "", "actief"),
-            ("Civiqs", "3.0", "PinkRoccade Local Government", "saas",
-             "Platform voor digitale dienstverlening aan inwoners en bedrijven.",
-             "https://www.pinkroccade-localgovernment.nl/civiqs", "Microsoft Azure", "actief"),
-            ("eBurgerzaken", "6.4", "PinkRoccade Local Government", "commercieel",
-             "Software voor burgerzakenprocessen waaronder BRP, reisdocumenten en naturalisatie.",
-             "https://www.pinkroccade-localgovernment.nl/eburgerzaken", "", "actief"),
-            ("Straatbeeld", "2.1", "PinkRoccade Local Government", "commercieel",
-             "Oplossing voor beheer openbare ruimte en meldingen.",
-             "https://www.pinkroccade-localgovernment.nl/straatbeeld", "", "actief"),
-            ("e-Suite", "10.2", "Atos", "saas",
-             "Integraal platform voor zaakgericht werken, documentmanagement en workflowbeheer.",
-             "https://www.atos.net/e-suite", "Microsoft Azure", "actief"),
-            ("Toptaak", "5.0", "Atos", "saas",
-             "Website-platform gebaseerd op de toptaken-methodiek voor gemeentelijke websites.",
-             "https://www.atos.net/toptaak", "Microsoft Azure", "actief"),
-            ("JOIN", "2024.1", "Decos", "saas",
-             "Zaakgericht werken, documentmanagement en besluitvorming in een platform.",
-             "https://www.decos.com/join", "Microsoft Azure", "actief"),
-            ("OpenZaak", "1.12", "Dimpact", "open_source",
-             "Open source zaakregistratiecomponent conform ZGW API-standaarden.",
-             "https://openzaak.org", "", "actief"),
-            ("Open Notificaties", "1.5", "Dimpact", "open_source",
-             "Open source component voor notificatie-routering conform NLX.",
-             "https://github.com/open-zaak/open-notificaties", "", "actief"),
-            ("OpenFormulieren", "2.6", "Dimpact", "open_source",
-             "Open source platform voor het bouwen van digitale formulieren.",
-             "https://open-formulieren.nl", "", "actief"),
-            ("OpenKlant", "0.8", "Dimpact", "open_source",
-             "Open source klantregistratiecomponent voor klantcontactbeheer.",
-             "https://github.com/maykinmedia/open-klant", "", "actief"),
-            ("OpenWoo", "1.2", "Open Webconcept", "open_source",
-             "WordPress-plugin voor publicatie conform de Wet open overheid.",
-             "https://openwebconcept.nl/openwoo", "", "actief"),
-            ("Squit XO", "4.8", "Green Valley", "commercieel",
-             "Vergunning-, toezicht- en handhavingssysteem voor het omgevingsdomein.",
-             "https://www.greenvalley.nl/squit-xo", "", "actief"),
-            ("GBI Geo", "3.4", "Green Valley", "commercieel",
-             "Geo-informatiesysteem voor beheer openbare ruimte en vastgoedinformatie.",
-             "https://www.greenvalley.nl/gbi", "", "actief"),
-            ("Civision Financien", "9.1", "Conxillium", "commercieel",
-             "Financieel systeem voor gemeentelijke begroting en verantwoording.",
-             "https://www.conxillium.nl", "", "actief"),
-            ("Corsa", "22.2", "BCT", "saas",
-             "Document- en informatiemanagement voor overheidsorganisaties.",
-             "https://www.bct.nl/corsa", "Microsoft Azure", "actief"),
-            ("Rx.Mission", "3.5", "Kodision", "saas",
-             "Low-code zaakafhandelplatform voor gemeentelijke processen.",
-             "https://www.kodision.com/rxmission", "Microsoft Azure", "actief"),
-            ("Procura BRP", "2024.2", "Procura", "commercieel",
-             "Compleet burgerzakensysteem voor BRP, reisdocumenten en burgerlijke stand.",
-             "https://www.procura.nl/producten/brp", "", "actief"),
-            ("SmartForms", "5.1", "Lost Lemon", "saas",
-             "Platform voor intelligente digitale formulieren en e-dienstverlening.",
-             "https://www.lostlemon.nl/smartforms", "Microsoft Azure", "actief"),
-            ("Drupal Govplatform", "10.3", "Yard", "open_source",
-             "Drupal-gebaseerd platform voor gemeentelijke websites conform Gebruiker Centraal.",
-             "https://www.yard.nl/govplatform", "", "actief"),
-            ("Inzender", "2.3", "Enable-U", "saas",
-             "Integratieplatform voor gegevensuitwisseling in de gemeentelijke informatieketen.",
-             "https://www.enable-u.com/inzender", "Microsoft Azure", "actief"),
-            ("Suwinet Inkijk", "8.0", "Topicus", "saas",
-             "Inzageapplicatie voor gegevensuitwisseling binnen het sociaal domein (SUWI).",
-             "https://www.topicus.nl/suwinet", "", "actief"),
-            ("GWS4all", "12.0", "Centric", "saas",
-             "Sociaal domein suite voor WMO, Jeugdwet en Participatiewet.",
-             "https://www.centric.eu/gws4all", "Microsoft Azure", "actief"),
-            ("Neuron ESB", "6.7", "Enable-U", "saas",
-             "Enterprise service bus voor gemeentelijk berichtenverkeer.",
-             "https://www.enable-u.com/neuron", "Microsoft Azure", "actief"),
-            ("Centric Belastingen", "4.3", "Centric", "saas",
-             "Belastingapplicatie voor OZB, rioolheffing en overige gemeentelijke belastingen.",
-             "https://www.centric.eu/belastingen", "Microsoft Azure", "actief"),
+            (
+                "Suite4Gemeenten",
+                "5.2",
+                "Centric",
+                "saas",
+                "Integraal zaaksysteem voor gemeentelijke processen. Ondersteunt zaakgericht werken, "
+                "documentmanagement en klantcontact.",
+                "https://www.centric.eu/suite4gemeenten",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Key2Burgerzaken",
+                "8.1",
+                "Centric",
+                "saas",
+                "Burgerzakensoftware voor BRP-beheer, burgerlijke stand, reisdocumenten en rijbewijzen.",
+                "https://www.centric.eu/key2burgerzaken",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Key2Financien",
+                "7.5",
+                "Centric",
+                "saas",
+                "Financieel systeem voor gemeenten met begroting, boekhouding en verantwoording.",
+                "https://www.centric.eu/key2financien",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "iNavigator",
+                "4.3",
+                "PinkRoccade Local Government",
+                "commercieel",
+                "Zaaksysteem en midoffice-oplossing voor gemeenten met procesondersteuning.",
+                "https://www.pinkroccade-localgovernment.nl/inavigator",
+                "",
+                "actief",
+            ),
+            (
+                "Civiqs",
+                "3.0",
+                "PinkRoccade Local Government",
+                "saas",
+                "Platform voor digitale dienstverlening aan inwoners en bedrijven.",
+                "https://www.pinkroccade-localgovernment.nl/civiqs",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "eBurgerzaken",
+                "6.4",
+                "PinkRoccade Local Government",
+                "commercieel",
+                "Software voor burgerzakenprocessen waaronder BRP, reisdocumenten en naturalisatie.",
+                "https://www.pinkroccade-localgovernment.nl/eburgerzaken",
+                "",
+                "actief",
+            ),
+            (
+                "Straatbeeld",
+                "2.1",
+                "PinkRoccade Local Government",
+                "commercieel",
+                "Oplossing voor beheer openbare ruimte en meldingen.",
+                "https://www.pinkroccade-localgovernment.nl/straatbeeld",
+                "",
+                "actief",
+            ),
+            (
+                "e-Suite",
+                "10.2",
+                "Atos",
+                "saas",
+                "Integraal platform voor zaakgericht werken, documentmanagement en workflowbeheer.",
+                "https://www.atos.net/e-suite",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Toptaak",
+                "5.0",
+                "Atos",
+                "saas",
+                "Website-platform gebaseerd op de toptaken-methodiek voor gemeentelijke websites.",
+                "https://www.atos.net/toptaak",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "JOIN",
+                "2024.1",
+                "Decos",
+                "saas",
+                "Zaakgericht werken, documentmanagement en besluitvorming in een platform.",
+                "https://www.decos.com/join",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "OpenZaak",
+                "1.12",
+                "Dimpact",
+                "open_source",
+                "Open source zaakregistratiecomponent conform ZGW API-standaarden.",
+                "https://openzaak.org",
+                "",
+                "actief",
+            ),
+            (
+                "Open Notificaties",
+                "1.5",
+                "Dimpact",
+                "open_source",
+                "Open source component voor notificatie-routering conform NLX.",
+                "https://github.com/open-zaak/open-notificaties",
+                "",
+                "actief",
+            ),
+            (
+                "OpenFormulieren",
+                "2.6",
+                "Dimpact",
+                "open_source",
+                "Open source platform voor het bouwen van digitale formulieren.",
+                "https://open-formulieren.nl",
+                "",
+                "actief",
+            ),
+            (
+                "OpenKlant",
+                "0.8",
+                "Dimpact",
+                "open_source",
+                "Open source klantregistratiecomponent voor klantcontactbeheer.",
+                "https://github.com/maykinmedia/open-klant",
+                "",
+                "actief",
+            ),
+            (
+                "OpenWoo",
+                "1.2",
+                "Open Webconcept",
+                "open_source",
+                "WordPress-plugin voor publicatie conform de Wet open overheid.",
+                "https://openwebconcept.nl/openwoo",
+                "",
+                "actief",
+            ),
+            (
+                "Squit XO",
+                "4.8",
+                "Green Valley",
+                "commercieel",
+                "Vergunning-, toezicht- en handhavingssysteem voor het omgevingsdomein.",
+                "https://www.greenvalley.nl/squit-xo",
+                "",
+                "actief",
+            ),
+            (
+                "GBI Geo",
+                "3.4",
+                "Green Valley",
+                "commercieel",
+                "Geo-informatiesysteem voor beheer openbare ruimte en vastgoedinformatie.",
+                "https://www.greenvalley.nl/gbi",
+                "",
+                "actief",
+            ),
+            (
+                "Civision Financien",
+                "9.1",
+                "Conxillium",
+                "commercieel",
+                "Financieel systeem voor gemeentelijke begroting en verantwoording.",
+                "https://www.conxillium.nl",
+                "",
+                "actief",
+            ),
+            (
+                "Corsa",
+                "22.2",
+                "BCT",
+                "saas",
+                "Document- en informatiemanagement voor overheidsorganisaties.",
+                "https://www.bct.nl/corsa",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Rx.Mission",
+                "3.5",
+                "Kodision",
+                "saas",
+                "Low-code zaakafhandelplatform voor gemeentelijke processen.",
+                "https://www.kodision.com/rxmission",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Procura BRP",
+                "2024.2",
+                "Procura",
+                "commercieel",
+                "Compleet burgerzakensysteem voor BRP, reisdocumenten en burgerlijke stand.",
+                "https://www.procura.nl/producten/brp",
+                "",
+                "actief",
+            ),
+            (
+                "SmartForms",
+                "5.1",
+                "Lost Lemon",
+                "saas",
+                "Platform voor intelligente digitale formulieren en e-dienstverlening.",
+                "https://www.lostlemon.nl/smartforms",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Drupal Govplatform",
+                "10.3",
+                "Yard",
+                "open_source",
+                "Drupal-gebaseerd platform voor gemeentelijke websites conform Gebruiker Centraal.",
+                "https://www.yard.nl/govplatform",
+                "",
+                "actief",
+            ),
+            (
+                "Inzender",
+                "2.3",
+                "Enable-U",
+                "saas",
+                "Integratieplatform voor gegevensuitwisseling in de gemeentelijke informatieketen.",
+                "https://www.enable-u.com/inzender",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Suwinet Inkijk",
+                "8.0",
+                "Topicus",
+                "saas",
+                "Inzageapplicatie voor gegevensuitwisseling binnen het sociaal domein (SUWI).",
+                "https://www.topicus.nl/suwinet",
+                "",
+                "actief",
+            ),
+            (
+                "GWS4all",
+                "12.0",
+                "Centric",
+                "saas",
+                "Sociaal domein suite voor WMO, Jeugdwet en Participatiewet.",
+                "https://www.centric.eu/gws4all",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Neuron ESB",
+                "6.7",
+                "Enable-U",
+                "saas",
+                "Enterprise service bus voor gemeentelijk berichtenverkeer.",
+                "https://www.enable-u.com/neuron",
+                "Microsoft Azure",
+                "actief",
+            ),
+            (
+                "Centric Belastingen",
+                "4.3",
+                "Centric",
+                "saas",
+                "Belastingapplicatie voor OZB, rioolheffing en overige gemeentelijke belastingen.",
+                "https://www.centric.eu/belastingen",
+                "Microsoft Azure",
+                "actief",
+            ),
             # Concept en verouderd
-            ("NieuwePakket Beta", "0.1", "Kodision", "saas",
-             "Nieuw pakket in ontwikkeling, nog niet beschikbaar voor productie.",
-             "https://www.kodision.com/beta", "", "concept"),
-            ("LegacyZaak", "2.0", "Atos", "commercieel",
-             "Verouderd zaaksysteem, wordt niet meer actief onderhouden.",
-             "", "", "verouderd"),
+            (
+                "NieuwePakket Beta",
+                "0.1",
+                "Kodision",
+                "saas",
+                "Nieuw pakket in ontwikkeling, nog niet beschikbaar voor productie.",
+                "https://www.kodision.com/beta",
+                "",
+                "concept",
+            ),
+            (
+                "LegacyZaak",
+                "2.0",
+                "Atos",
+                "commercieel",
+                "Verouderd zaaksysteem, wordt niet meer actief onderhouden.",
+                "",
+                "",
+                "verouderd",
+            ),
         ]
 
         licentie_map = {
@@ -701,7 +1005,17 @@ class Command(BaseCommand):
     def _create_pakket_standaarden(self, pakketten, standaarden):
         # Welke pakketten ondersteunen welke standaarden
         koppelingen = {
-            "Suite4Gemeenten": ["DigiD", "StUF-BG", "StUF-ZKN", "ZGW API's", "CMIS", "SAML", "WCAG", "TLS", "HTTPS/HSTS"],
+            "Suite4Gemeenten": [
+                "DigiD",
+                "StUF-BG",
+                "StUF-ZKN",
+                "ZGW API's",
+                "CMIS",
+                "SAML",
+                "WCAG",
+                "TLS",
+                "HTTPS/HSTS",
+            ],
             "Key2Burgerzaken": ["DigiD", "StUF-BG", "Haal Centraal BRP", "SAML", "TLS", "HTTPS/HSTS"],
             "Key2Financien": ["SAML", "TLS", "HTTPS/HSTS", "WCAG"],
             "iNavigator": ["StUF-BG", "StUF-ZKN", "ZGW API's", "CMIS", "DigiD", "SAML", "TLS"],
@@ -750,7 +1064,13 @@ class Command(BaseCommand):
 
     def _create_pakket_gemma(self, pakketten, componenten):
         gemma_koppelingen = {
-            "Suite4Gemeenten": ["Zaaksysteem", "Zaakafhandelservice", "Zaakregistratieservice", "Midoffice", "Klantcontactsysteem"],
+            "Suite4Gemeenten": [
+                "Zaaksysteem",
+                "Zaakafhandelservice",
+                "Zaakregistratieservice",
+                "Midoffice",
+                "Klantcontactsysteem",
+            ],
             "Key2Burgerzaken": ["Burgerzakensysteem", "BRP-beheermodule", "Burgerlijke stand module"],
             "Key2Financien": ["Financieel systeem", "Begrotingsmodule", "Facturatiemodule"],
             "iNavigator": ["Zaaksysteem", "Midoffice", "Zaakafhandelservice"],
@@ -804,20 +1124,39 @@ class Command(BaseCommand):
         # Standaard-stacks per "type" gemeente
         # Grote gemeenten: Centric of PinkRoccade stack
         centric_stack = [
-            "Suite4Gemeenten", "Key2Burgerzaken", "Key2Financien",
-            "GWS4all", "Centric Belastingen",
+            "Suite4Gemeenten",
+            "Key2Burgerzaken",
+            "Key2Financien",
+            "GWS4all",
+            "Centric Belastingen",
         ]
         pink_stack = [
-            "iNavigator", "eBurgerzaken", "Civiqs", "Straatbeeld",
+            "iNavigator",
+            "eBurgerzaken",
+            "Civiqs",
+            "Straatbeeld",
         ]
         # Aanvullende pakketten die gemeenten combineren
         aanvullingen = [
-            "Corsa", "Squit XO", "SmartForms", "Neuron ESB",
-            "Suwinet Inkijk", "OpenFormulieren", "OpenZaak",
-            "Drupal Govplatform", "Toptaak", "Inzender",
-            "GBI Geo", "JOIN", "e-Suite", "Rx.Mission",
-            "OpenWoo", "Open Notificaties", "OpenKlant",
-            "Civision Financien", "Procura BRP",
+            "Corsa",
+            "Squit XO",
+            "SmartForms",
+            "Neuron ESB",
+            "Suwinet Inkijk",
+            "OpenFormulieren",
+            "OpenZaak",
+            "Drupal Govplatform",
+            "Toptaak",
+            "Inzender",
+            "GBI Geo",
+            "JOIN",
+            "e-Suite",
+            "Rx.Mission",
+            "OpenWoo",
+            "Open Notificaties",
+            "OpenKlant",
+            "Civision Financien",
+            "Procura BRP",
         ]
 
         alle_gebruik = {}
@@ -922,53 +1261,65 @@ class Command(BaseCommand):
         admin = users.get("admin")
 
         paginas = [
-            ("Over de Softwarecatalogus", "over-de-softwarecatalogus",
-             "De Softwarecatalogus is het centrale platform waar Nederlandse gemeenten, "
-             "samenwerkingsverbanden en leveranciers software-applicaties kunnen registreren, "
-             "vergelijken en raadplegen. Het platform maakt deel uit van de VNG Realisatie "
-             "dienstverlening en biedt inzicht in het ICT-landschap van de gemeentelijke overheid.\n\n"
-             "## Wat kun je met de Softwarecatalogus?\n\n"
-             "- **Aanbod raadplegen**: Doorzoek het aanbod van software voor gemeenten\n"
-             "- **Gebruik inzien**: Bekijk welke gemeenten welke software gebruiken\n"
-             "- **Gluren bij de buren**: Vergelijk je pakketlandschap met andere gemeenten\n"
-             "- **GEMMA-architectuur**: Bekijk software in de context van de GEMMA-referentiearchitectuur\n"
-             "- **Standaarden**: Controleer welke open standaarden worden ondersteund"),
-            ("Veelgestelde vragen", "veelgestelde-vragen",
-             "## Hoe registreer ik mijn organisatie?\n\n"
-             "Ga naar de registratiepagina en vul het formulier in. Na fiattering door de "
-             "beheerder krijgt u toegang.\n\n"
-             "## Hoe voeg ik een pakket toe?\n\n"
-             "Als aanbod-beheerder kunt u via het dashboard pakketten registreren. "
-             "Het pakket verschijnt eerst als concept en wordt na controle gepubliceerd.\n\n"
-             "## Wat is GEMMA?\n\n"
-             "GEMMA staat voor GEMeentelijke Model Architectuur. Het is de "
-             "referentiearchitectuur voor gemeenten, ontwikkeld door VNG Realisatie.\n\n"
-             "## Hoe exporteer ik mijn pakketlandschap?\n\n"
-             "Via het dashboard kunt u uw pakketoverzicht exporteren als CSV, Excel of "
-             "ArchiMate Exchange (AMEFF) bestand."),
-            ("Privacyverklaring", "privacyverklaring",
-             "## Privacyverklaring Softwarecatalogus\n\n"
-             "De Softwarecatalogus wordt beheerd door VNG Realisatie BV. Wij respecteren uw "
-             "privacy en verwerken persoonsgegevens conform de AVG.\n\n"
-             "### Welke gegevens verwerken wij?\n\n"
-             "- Naam en e-mailadres van geregistreerde gebruikers\n"
-             "- Organisatiegegevens\n"
-             "- Gebruiksstatistieken (via Matomo, privacyvriendelijk)\n\n"
-             "### Contact\n\n"
-             "Voor vragen over privacy kunt u contact opnemen met de functionaris "
-             "gegevensbescherming via privacy@vngrealisatie.nl."),
-            ("Toegankelijkheid", "toegankelijkheid",
-             "## Toegankelijkheidsverklaring\n\n"
-             "De Softwarecatalogus voldoet aan de Web Content Accessibility Guidelines (WCAG) "
-             "2.1 niveau AA, conform de eisen van digitoegankelijk.nl.\n\n"
-             "### Wat hebben wij gedaan?\n\n"
-             "- Alle pagina's zijn navigeerbaar met toetsenbord\n"
-             "- Voldoende kleurcontrast op alle elementen\n"
-             "- Screen reader compatibel\n"
-             "- Duidelijke foutmeldingen en labels\n\n"
-             "### Probleem melden\n\n"
-             "Ervaart u een toegankelijkheidsprobleem? Neem contact op via "
-             "toegankelijkheid@softwarecatalogus.nl."),
+            (
+                "Over de Softwarecatalogus",
+                "over-de-softwarecatalogus",
+                "De Softwarecatalogus is het centrale platform waar Nederlandse gemeenten, "
+                "samenwerkingsverbanden en leveranciers software-applicaties kunnen registreren, "
+                "vergelijken en raadplegen. Het platform maakt deel uit van de VNG Realisatie "
+                "dienstverlening en biedt inzicht in het ICT-landschap van de gemeentelijke overheid.\n\n"
+                "## Wat kun je met de Softwarecatalogus?\n\n"
+                "- **Aanbod raadplegen**: Doorzoek het aanbod van software voor gemeenten\n"
+                "- **Gebruik inzien**: Bekijk welke gemeenten welke software gebruiken\n"
+                "- **Gluren bij de buren**: Vergelijk je pakketlandschap met andere gemeenten\n"
+                "- **GEMMA-architectuur**: Bekijk software in de context van de GEMMA-referentiearchitectuur\n"
+                "- **Standaarden**: Controleer welke open standaarden worden ondersteund",
+            ),
+            (
+                "Veelgestelde vragen",
+                "veelgestelde-vragen",
+                "## Hoe registreer ik mijn organisatie?\n\n"
+                "Ga naar de registratiepagina en vul het formulier in. Na fiattering door de "
+                "beheerder krijgt u toegang.\n\n"
+                "## Hoe voeg ik een pakket toe?\n\n"
+                "Als aanbod-beheerder kunt u via het dashboard pakketten registreren. "
+                "Het pakket verschijnt eerst als concept en wordt na controle gepubliceerd.\n\n"
+                "## Wat is GEMMA?\n\n"
+                "GEMMA staat voor GEMeentelijke Model Architectuur. Het is de "
+                "referentiearchitectuur voor gemeenten, ontwikkeld door VNG Realisatie.\n\n"
+                "## Hoe exporteer ik mijn pakketlandschap?\n\n"
+                "Via het dashboard kunt u uw pakketoverzicht exporteren als CSV, Excel of "
+                "ArchiMate Exchange (AMEFF) bestand.",
+            ),
+            (
+                "Privacyverklaring",
+                "privacyverklaring",
+                "## Privacyverklaring Softwarecatalogus\n\n"
+                "De Softwarecatalogus wordt beheerd door VNG Realisatie BV. Wij respecteren uw "
+                "privacy en verwerken persoonsgegevens conform de AVG.\n\n"
+                "### Welke gegevens verwerken wij?\n\n"
+                "- Naam en e-mailadres van geregistreerde gebruikers\n"
+                "- Organisatiegegevens\n"
+                "- Gebruiksstatistieken (via Matomo, privacyvriendelijk)\n\n"
+                "### Contact\n\n"
+                "Voor vragen over privacy kunt u contact opnemen met de functionaris "
+                "gegevensbescherming via privacy@vngrealisatie.nl.",
+            ),
+            (
+                "Toegankelijkheid",
+                "toegankelijkheid",
+                "## Toegankelijkheidsverklaring\n\n"
+                "De Softwarecatalogus voldoet aan de Web Content Accessibility Guidelines (WCAG) "
+                "2.1 niveau AA, conform de eisen van digitoegankelijk.nl.\n\n"
+                "### Wat hebben wij gedaan?\n\n"
+                "- Alle pagina's zijn navigeerbaar met toetsenbord\n"
+                "- Voldoende kleurcontrast op alle elementen\n"
+                "- Screen reader compatibel\n"
+                "- Duidelijke foutmeldingen en labels\n\n"
+                "### Probleem melden\n\n"
+                "Ervaart u een toegankelijkheidsprobleem? Neem contact op via "
+                "toegankelijkheid@softwarecatalogus.nl.",
+            ),
         ]
 
         for titel, slug, inhoud in paginas:
@@ -983,40 +1334,52 @@ class Command(BaseCommand):
             )
 
         nieuwsberichten = [
-            ("Softwarecatalogus 2.0 gelanceerd", "softwarecatalogus-2-gelanceerd",
-             "De vernieuwde Softwarecatalogus is live! Ontdek de nieuwe functies.",
-             "Vandaag lanceren wij de volledig vernieuwde Softwarecatalogus. Het platform is "
-             "van de grond af opgebouwd met moderne technologie en biedt verbeterde "
-             "zoekfunctionaliteit, GEMMA-integratie en een nieuw dashboard voor gemeenten.\n\n"
-             "## Belangrijkste verbeteringen\n\n"
-             "- Snellere zoekfunctie met Meilisearch\n"
-             "- Interactieve GEMMA-architectuurkaart\n"
-             "- Verbeterd dashboard voor pakketbeheer\n"
-             "- Open API conform NL API Strategie\n"
-             "- Volledig toegankelijk (WCAG 2.1 AA)",
-             -30),
-            ("ZGW API's nu als verplichte standaard", "zgw-apis-verplichte-standaard",
-             "De ZGW API-standaarden zijn opgenomen op de 'pas toe of leg uit'-lijst.",
-             "Het Forum Standaardisatie heeft de ZGW API-standaarden (Zaakgericht Werken) "
-             "opgenomen op de lijst van verplichte standaarden. Dit betekent dat alle "
-             "overheidsinstellingen deze standaarden moeten toepassen of uitleggen waarom "
-             "zij dit niet doen.\n\n"
-             "In de Softwarecatalogus kunt u per pakket zien of de ZGW API's worden ondersteund.",
-             -20),
-            ("Nieuwe GEMMA-componenten toegevoegd", "nieuwe-gemma-componenten",
-             "Het GEMMA-model is bijgewerkt met nieuwe referentiecomponenten.",
-             "VNG Realisatie heeft het GEMMA-referentiearchitectuurmodel bijgewerkt. "
-             "Er zijn nieuwe applicatiecomponenten en -services toegevoegd die aansluiten "
-             "bij de Omgevingswet en de Wet open overheid.\n\n"
-             "De bijgewerkte componenten zijn direct beschikbaar in de Softwarecatalogus.",
-             -10),
-            ("Open source groeit bij gemeenten", "open-source-groeit",
-             "Steeds meer gemeenten kiezen voor open source software.",
-             "Uit de gegevens van de Softwarecatalogus blijkt dat het gebruik van open source "
-             "software bij gemeenten het afgelopen jaar met 35% is gegroeid. Vooral OpenZaak, "
-             "OpenFormulieren en OpenKlant worden breed ingezet.\n\n"
-             "De trend sluit aan bij de Common Ground-principes van VNG.",
-             -5),
+            (
+                "Softwarecatalogus 2.0 gelanceerd",
+                "softwarecatalogus-2-gelanceerd",
+                "De vernieuwde Softwarecatalogus is live! Ontdek de nieuwe functies.",
+                "Vandaag lanceren wij de volledig vernieuwde Softwarecatalogus. Het platform is "
+                "van de grond af opgebouwd met moderne technologie en biedt verbeterde "
+                "zoekfunctionaliteit, GEMMA-integratie en een nieuw dashboard voor gemeenten.\n\n"
+                "## Belangrijkste verbeteringen\n\n"
+                "- Snellere zoekfunctie met Meilisearch\n"
+                "- Interactieve GEMMA-architectuurkaart\n"
+                "- Verbeterd dashboard voor pakketbeheer\n"
+                "- Open API conform NL API Strategie\n"
+                "- Volledig toegankelijk (WCAG 2.1 AA)",
+                -30,
+            ),
+            (
+                "ZGW API's nu als verplichte standaard",
+                "zgw-apis-verplichte-standaard",
+                "De ZGW API-standaarden zijn opgenomen op de 'pas toe of leg uit'-lijst.",
+                "Het Forum Standaardisatie heeft de ZGW API-standaarden (Zaakgericht Werken) "
+                "opgenomen op de lijst van verplichte standaarden. Dit betekent dat alle "
+                "overheidsinstellingen deze standaarden moeten toepassen of uitleggen waarom "
+                "zij dit niet doen.\n\n"
+                "In de Softwarecatalogus kunt u per pakket zien of de ZGW API's worden ondersteund.",
+                -20,
+            ),
+            (
+                "Nieuwe GEMMA-componenten toegevoegd",
+                "nieuwe-gemma-componenten",
+                "Het GEMMA-model is bijgewerkt met nieuwe referentiecomponenten.",
+                "VNG Realisatie heeft het GEMMA-referentiearchitectuurmodel bijgewerkt. "
+                "Er zijn nieuwe applicatiecomponenten en -services toegevoegd die aansluiten "
+                "bij de Omgevingswet en de Wet open overheid.\n\n"
+                "De bijgewerkte componenten zijn direct beschikbaar in de Softwarecatalogus.",
+                -10,
+            ),
+            (
+                "Open source groeit bij gemeenten",
+                "open-source-groeit",
+                "Steeds meer gemeenten kiezen voor open source software.",
+                "Uit de gegevens van de Softwarecatalogus blijkt dat het gebruik van open source "
+                "software bij gemeenten het afgelopen jaar met 35% is gegroeid. Vooral OpenZaak, "
+                "OpenFormulieren en OpenKlant worden breed ingezet.\n\n"
+                "De trend sluit aan bij de Common Ground-principes van VNG.",
+                -5,
+            ),
         ]
 
         now = timezone.now()
@@ -1118,7 +1481,10 @@ class Command(BaseCommand):
             ("Pagina's", Pagina.objects.count()),
             ("Nieuwsberichten", Nieuwsbericht.objects.count()),
             ("Notificaties", Notificatie.objects.count()),
-            ("Aanbestedingen (TenderNed)", __import__("apps.aanbestedingen.models", fromlist=["Aanbesteding"]).Aanbesteding.objects.count()),
+            (
+                "Aanbestedingen (TenderNed)",
+                __import__("apps.aanbestedingen.models", fromlist=["Aanbesteding"]).Aanbesteding.objects.count(),
+            ),
         ]
         for label, count in stats:
             self.stdout.write(f"  {label}: {count}")

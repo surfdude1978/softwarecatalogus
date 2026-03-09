@@ -1,4 +1,5 @@
 """Modellen voor TenderNed aanbestedingen met GEMMA-duiding."""
+
 from django.db import models
 
 from apps.core.models import BaseModel
@@ -63,9 +64,7 @@ class Aanbesteding(BaseModel):
         help_text="Bijv. Openbare procedure, Niet-openbare procedure",
     )
     publicatiedatum = models.DateField(verbose_name="Publicatiedatum")
-    sluitingsdatum = models.DateField(
-        null=True, blank=True, verbose_name="Sluitingsdatum"
-    )
+    sluitingsdatum = models.DateField(null=True, blank=True, verbose_name="Sluitingsdatum")
     cpv_codes = models.JSONField(
         default=list,
         verbose_name="CPV-codes",
@@ -140,8 +139,4 @@ class Aanbesteding(BaseModel):
     def is_ict_aanbesteding(self):
         """Controleer of dit een ICT-aanbesteding is op basis van CPV-codes."""
         ict_prefixen = ("48", "72")
-        return any(
-            str(cpv).startswith(prefix)
-            for cpv in self.cpv_codes
-            for prefix in ict_prefixen
-        )
+        return any(str(cpv).startswith(prefix) for cpv in self.cpv_codes for prefix in ict_prefixen)

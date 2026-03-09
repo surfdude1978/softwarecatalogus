@@ -6,6 +6,7 @@ Taken:
 - koppel_organisaties: Koppel aanbestedingen aan gemeenten in de catalogus
 - koppel_gemma_componenten: GEMMA-duiding op basis van CPV-codes
 """
+
 import logging
 
 from celery import shared_task
@@ -86,7 +87,10 @@ def sync_tenderned(self, dagen_terug: int = 30, max_resultaten: int = 200):
     duur = (timezone.now() - start).total_seconds()
     logger.info(
         "TenderNed sync klaar in %.1fs — aangemaakt: %d, bijgewerkt: %d, fouten: %d",
-        duur, aangemaakt, bijgewerkt, fouten,
+        duur,
+        aangemaakt,
+        bijgewerkt,
+        fouten,
     )
 
     return {
@@ -141,9 +145,7 @@ def _koppel_gemma(aanbesteding):
     if not component_namen:
         return
 
-    gevonden_componenten = GemmaComponent.objects.filter(
-        naam__in=component_namen
-    )
+    gevonden_componenten = GemmaComponent.objects.filter(naam__in=component_namen)
 
     if gevonden_componenten.exists():
         aanbesteding.gemma_componenten.set(gevonden_componenten)

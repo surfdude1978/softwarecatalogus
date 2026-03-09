@@ -1,4 +1,5 @@
 """Modellen voor GEMMA referentiearchitectuur (ArchiMate)."""
+
 from django.db import models
 
 from apps.core.models import BaseModel
@@ -15,9 +16,7 @@ class GemmaComponent(BaseModel):
 
     naam = models.CharField(max_length=255, verbose_name="Naam")
     archimate_id = models.CharField(max_length=100, unique=True, verbose_name="ArchiMate ID")
-    type = models.CharField(
-        max_length=25, choices=Type.choices, default=Type.APPLICATIE_COMPONENT, verbose_name="Type"
-    )
+    type = models.CharField(max_length=25, choices=Type.choices, default=Type.APPLICATIE_COMPONENT, verbose_name="Type")
     beschrijving = models.TextField(blank=True, verbose_name="Beschrijving")
     gemma_online_url = models.URLField(blank=True, verbose_name="GEMMA Online URL")
     parent = models.ForeignKey(

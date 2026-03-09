@@ -1,4 +1,5 @@
 """Tests voor bugfixes #24 (zoeken werkt niet) en #25 (concept pakketten publiek zichtbaar)."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,9 +10,11 @@ pytestmark = pytest.mark.django_db
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def leverancier(db):
     from apps.organisaties.models import Organisatie
+
     return Organisatie.objects.create(
         naam="Test Leverancier BV",
         type="leverancier",
@@ -22,6 +25,7 @@ def leverancier(db):
 @pytest.fixture
 def actief_pakket(db, leverancier):
     from apps.pakketten.models import Pakket
+
     return Pakket.objects.create(
         naam="Actief Pakket",
         beschrijving="Een actief pakket voor gemeenten.",
@@ -34,6 +38,7 @@ def actief_pakket(db, leverancier):
 @pytest.fixture
 def concept_pakket(db, leverancier):
     from apps.pakketten.models import Pakket
+
     return Pakket.objects.create(
         naam="Concept Pakket",
         beschrijving="Nog niet goedgekeurd pakket.",
@@ -44,6 +49,7 @@ def concept_pakket(db, leverancier):
 
 
 # ── Bug #25: concept-pakketten publiek zichtbaar ──────────────────────────────
+
 
 class TestConceptPakkettenPubliekZichtbaar:
     """Issue #25: concept-pakketten mogen niet zichtbaar zijn voor anonieme gebruikers."""
@@ -78,9 +84,7 @@ class TestConceptPakkettenPubliekZichtbaar:
         assert actief_pakket.naam in namen
         assert concept_pakket.naam in namen
 
-    def test_filter_op_status_concept_geeft_lege_lijst_voor_anoniem(
-        self, api_client, concept_pakket
-    ):
+    def test_filter_op_status_concept_geeft_lege_lijst_voor_anoniem(self, api_client, concept_pakket):
         """?status=concept geeft lege lijst voor anonieme gebruiker."""
         url = reverse("api:pakket-list") + "?status=concept"
         response = api_client.get(url)
@@ -90,6 +94,7 @@ class TestConceptPakkettenPubliekZichtbaar:
 
 # ── Bug #24: zoek-endpoint ORM-fallback ──────────────────────────────────────
 
+
 class TestZoekEndpointOrmFallback:
     """Issue #24: zoeken werkt altijd, ook zonder Meilisearch."""
 
@@ -98,9 +103,7 @@ class TestZoekEndpointOrmFallback:
         response = api_client.get(url)
         assert response.status_code == 400
 
-    def test_zoek_via_orm_fallback_bij_meilisearch_fout(
-        self, api_client, actief_pakket
-    ):
+    def test_zoek_via_orm_fallback_bij_meilisearch_fout(self, api_client, actief_pakket):
         """Als Meilisearch niet beschikbaar is, valt het endpoint terug op ORM."""
         url = reverse("api:zoek") + "?q=actief"
         with patch(
@@ -114,9 +117,7 @@ class TestZoekEndpointOrmFallback:
         namen = [h["naam"] for h in response.data["hits"]]
         assert actief_pakket.naam in namen
 
-    def test_orm_fallback_bevat_geen_concept_pakketten(
-        self, api_client, actief_pakket, concept_pakket
-    ):
+    def test_orm_fallback_bevat_geen_concept_pakketten(self, api_client, actief_pakket, concept_pakket):
         """ORM-fallback toont geen concept-pakketten aan publiek."""
         url = reverse("api:zoek") + "?q=pakket"
         with patch(
@@ -181,9 +182,7 @@ class TestZoekEndpointOrmFallback:
         # concept_pakket heeft licentievorm=commercieel, niet saas
         assert concept_pakket.naam not in namen
 
-    def test_zoek_meilisearch_filter_bevat_alleen_actief(
-        self, api_client, actief_pakket
-    ):
+    def test_zoek_meilisearch_filter_bevat_alleen_actief(self, api_client, actief_pakket):
         """Meilisearch-filter bevat alleen status=actief (niet concept)."""
         mock_index = MagicMock()
         mock_index.search.return_value = {
@@ -199,8 +198,6 @@ class TestZoekEndpointOrmFallback:
 
         # Controleer dat de filter alleen 'actief' bevat, niet 'concept'
         call_args = mock_index.search.call_args
-        used_filter = call_args[1].get("filter") or (
-            call_args[0][1].get("filter") if len(call_args[0]) > 1 else ""
-        )
+        used_filter = call_args[1].get("filter") or (call_args[0][1].get("filter") if len(call_args[0]) > 1 else "")
         assert "actief" in used_filter
         assert "concept" not in used_filter

@@ -13,9 +13,7 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 # Pad naar docs/handleiding.md (relatief aan de project-root)
-_HANDLEIDING_PAD = (
-    Path(__file__).resolve().parent.parent.parent.parent / "docs" / "handleiding.md"
-)
+_HANDLEIDING_PAD = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "handleiding.md"
 
 _HANDLEIDING_CACHE: str | None = None
 
@@ -33,11 +31,13 @@ def _laad_handleiding() -> str:
 
 class HelpVraagThrottle(AnonRateThrottle):
     """Beperkt anonieme requests tot 20 per minuut per IP."""
+
     rate = "20/min"
 
 
 class HelpVraagAuthThrottle(UserRateThrottle):
     """Beperkt geauthenticeerde requests tot 60 per minuut."""
+
     rate = "60/min"
 
 
@@ -99,9 +99,7 @@ HANDLEIDING:
 {handleiding}"""
 
         context_toevoeging = (
-            f"\n\n[Context: de gebruiker bevindt zich momenteel op pagina '{pagina_context}']"
-            if pagina_context
-            else ""
+            f"\n\n[Context: de gebruiker bevindt zich momenteel op pagina '{pagina_context}']" if pagina_context else ""
         )
 
         try:

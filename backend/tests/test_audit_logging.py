@@ -12,6 +12,7 @@ pytestmark = pytest.mark.django_db
 # Tests: AuditLog model
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestAuditLogModel:
     def test_str_methode(self, db):
         entry = AuditLog.objects.create(
@@ -55,10 +56,12 @@ class TestAuditLogModel:
 # Tests: log_actie() helper
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestLogActie:
     def _make_anon_request(self, extra_meta=None):
         """Maak een anonieme MagicMock request aan."""
         from unittest.mock import MagicMock
+
         req = MagicMock()
         anon = MagicMock()
         anon.is_authenticated = False
@@ -71,6 +74,7 @@ class TestLogActie:
     def _make_user_request(self, user):
         """Maak een MagicMock request met een echte gebruiker."""
         from unittest.mock import MagicMock
+
         req = MagicMock()
         req.user = user
         req.META = {"REMOTE_ADDR": "127.0.0.1", "HTTP_USER_AGENT": "pytest"}
@@ -96,19 +100,19 @@ class TestLogActie:
         assert entry.ip_adres == "192.168.1.1"
 
     def test_log_actie_x_forwarded_for(self, db, pakket):
-        req = self._make_anon_request({
-            "HTTP_X_FORWARDED_FOR": "203.0.113.1, 10.0.0.1",
-            "REMOTE_ADDR": "10.0.0.2",
-        })
+        req = self._make_anon_request(
+            {
+                "HTTP_X_FORWARDED_FOR": "203.0.113.1, 10.0.0.1",
+                "REMOTE_ADDR": "10.0.0.2",
+            }
+        )
         entry = log_actie(req, AuditLog.Actie.AANGEMAAKT, instance=pakket)
         assert entry.ip_adres == "203.0.113.1"
 
     def test_log_actie_met_wijzigingen(self, db, pakket):
         req = self._make_anon_request()
         wijzigingen = {"naam": {"oud": "Oud", "nieuw": "Nieuw"}}
-        entry = log_actie(
-            req, AuditLog.Actie.BIJGEWERKT, instance=pakket, wijzigingen=wijzigingen
-        )
+        entry = log_actie(req, AuditLog.Actie.BIJGEWERKT, instance=pakket, wijzigingen=wijzigingen)
         assert entry.wijzigingen == wijzigingen
 
     def test_log_actie_zonder_instance(self, db):
@@ -128,21 +132,26 @@ class TestLogActie:
 # Tests: AuditLogMixin via API (integratie)
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestAuditLogMixinIntegratie:
     def test_aanmaken_pakket_logt_actie(self, api_client, aanbod_beheerder, leverancier):
         """Aanmaken via API door aanbod_beheerder → AuditLog entry met actie=aangemaakt."""
         from rest_framework_simplejwt.tokens import RefreshToken
+
         refresh = RefreshToken.for_user(aanbod_beheerder)
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         url = reverse("api:pakket-list")
         voor = AuditLog.objects.count()
-        api_client.post(url, {
-            "naam": "Nieuw Pakket",
-            "leverancier": str(leverancier.pk),
-            "status": "concept",
-            "licentievorm": "saas",
-        })
+        api_client.post(
+            url,
+            {
+                "naam": "Nieuw Pakket",
+                "leverancier": str(leverancier.pk),
+                "status": "concept",
+                "licentievorm": "saas",
+            },
+        )
         assert AuditLog.objects.count() > voor
         entry = AuditLog.objects.filter(actie=AuditLog.Actie.AANGEMAAKT).last()
         assert entry is not None
@@ -160,10 +169,12 @@ class TestAuditLogMixinIntegratie:
 # Tests: ExportAuditLogCSV
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestExportAuditLogCSV:
     def _fb_client(self, api_client, functioneel_beheerder):
         """Geef een api_client met functioneel beheerder token."""
         from rest_framework_simplejwt.tokens import RefreshToken
+
         refresh = RefreshToken.for_user(functioneel_beheerder)
         api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
         return api_client

@@ -1,4 +1,5 @@
 """Aangepaste JWT authenticatie die cookies én Authorization-header ondersteunt."""
+
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError

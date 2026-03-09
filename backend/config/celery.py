@@ -1,4 +1,5 @@
 """Celery configuratie voor Softwarecatalogus."""
+
 import os
 
 from celery import Celery

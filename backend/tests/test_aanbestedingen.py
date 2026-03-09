@@ -1,4 +1,5 @@
 """Tests voor TenderNed aanbestedingen: client, taken en koppellogica."""
+
 from datetime import date
 from unittest.mock import MagicMock, patch
 
@@ -18,6 +19,7 @@ pytestmark = pytest.mark.django_db
 # ─────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def client_demo():
@@ -55,6 +57,7 @@ def aanbesteding(db):
 # Tests: bepaal_gemma_componenten
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestBepaalGemmaComponenten:
     def test_zaaksysteem_cpv(self):
         componenten = bepaal_gemma_componenten(["48100000"])
@@ -86,6 +89,7 @@ class TestBepaalGemmaComponenten:
 # Tests: TenderNedClient – demo-modus
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestTenderNedClientDemo:
     def test_demo_modus_geeft_demo_data(self, client_demo):
         resultaten = client_demo.haal_ict_aanbestedingen_op()
@@ -111,6 +115,7 @@ class TestTenderNedClientDemo:
 # ─────────────────────────────────────────────────────────────────
 # Tests: TenderNedClient – _extraheer_cpv_codes
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestExtraheerCpvCodes:
     def setup_method(self):
@@ -156,6 +161,7 @@ class TestExtraheerCpvCodes:
 # Tests: TenderNedClient – _is_ict_aanbesteding
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestIsIctAanbesteding:
     def setup_method(self):
         self.client = TenderNedClient(demo_mode=True)
@@ -180,6 +186,7 @@ class TestIsIctAanbesteding:
 # Tests: TenderNedClient – _map_type
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestMapType:
     def setup_method(self):
         self.client = TenderNedClient(demo_mode=True)
@@ -203,6 +210,7 @@ class TestMapType:
 # ─────────────────────────────────────────────────────────────────
 # Tests: TenderNedClient – _map_status
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestMapStatus:
     def setup_method(self):
@@ -242,6 +250,7 @@ class TestMapStatus:
 # ─────────────────────────────────────────────────────────────────
 # Tests: TenderNedClient – _normaliseer
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestNormaliseer:
     def setup_method(self):
@@ -291,6 +300,7 @@ class TestNormaliseer:
 # ─────────────────────────────────────────────────────────────────
 # Tests: TenderNedClient – live API via mocks
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestTenderNedClientLive:
     def test_haal_van_api_succes(self, client_live):
@@ -349,6 +359,7 @@ class TestTenderNedClientLive:
 
     def test_haal_van_api_request_fout(self, client_live):
         import requests as req_lib
+
         with patch("requests.get", side_effect=req_lib.RequestException("Timeout")):
             resultaten = client_live.haal_ict_aanbestedingen_op()
 
@@ -366,9 +377,13 @@ class TestTenderNedClientLive:
             if call_count == 1:
                 mock_resp.json.return_value = {
                     "content": [
-                        {"id": f"TEST-{i}", "publicatiecode": f"TEST-{i}",
-                         "naam": "ICT test", "cpvCodes": ["48000000"],
-                         "publicatiedatum": "2024-01-01"}
+                        {
+                            "id": f"TEST-{i}",
+                            "publicatiecode": f"TEST-{i}",
+                            "naam": "ICT test",
+                            "cpvCodes": ["48000000"],
+                            "publicatiedatum": "2024-01-01",
+                        }
                         for i in range(25)
                     ],
                     "last": False,
@@ -377,9 +392,13 @@ class TestTenderNedClientLive:
             else:
                 mock_resp.json.return_value = {
                     "content": [
-                        {"id": "TEST-99", "publicatiecode": "TEST-99",
-                         "naam": "ICT test 2", "cpvCodes": ["48000000"],
-                         "publicatiedatum": "2024-01-01"}
+                        {
+                            "id": "TEST-99",
+                            "publicatiecode": "TEST-99",
+                            "naam": "ICT test 2",
+                            "cpvCodes": ["48000000"],
+                            "publicatiedatum": "2024-01-01",
+                        }
                     ],
                     "last": True,
                 }
@@ -406,6 +425,7 @@ class TestTenderNedClientLive:
 
     def test_haal_detail_fout_geeft_fallback(self, client_live):
         import requests as req_lib
+
         fallback = {"fallback": True}
 
         with patch("requests.get", side_effect=req_lib.RequestException("404")):
@@ -464,6 +484,7 @@ class TestTenderNedClientLive:
 # ─────────────────────────────────────────────────────────────────
 # Tests: sync_tenderned Celery task
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestSyncTenderned:
     def test_sync_maakt_aanbestedingen_aan(self, db):
@@ -537,9 +558,7 @@ class TestSyncTenderned:
         from apps.aanbestedingen.tasks import sync_tenderned
 
         with patch("apps.aanbestedingen.client.TenderNedClient") as mock_client:
-            mock_client.return_value.haal_ict_aanbestedingen_op.side_effect = (
-                req_lib.RequestException("Timeout")
-            )
+            mock_client.return_value.haal_ict_aanbestedingen_op.side_effect = req_lib.RequestException("Timeout")
             with pytest.raises(Exception):  # Celery retry raises
                 sync_tenderned()
 
@@ -573,6 +592,7 @@ class TestSyncTenderned:
 # ─────────────────────────────────────────────────────────────────
 # Tests: Aanbesteding model
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestAanbestedingModel:
     def test_primaire_cpv(self, aanbesteding):
@@ -624,9 +644,11 @@ class TestAanbestedingModel:
 # Tests: Aanbestedingen API endpoint
 # ─────────────────────────────────────────────────────────────────
 
+
 class TestAanbestedingenAPI:
     def test_lijst_aanbestedingen(self, api_client, aanbesteding):
         from django.urls import reverse
+
         url = reverse("api:aanbesteding-list")
         response = api_client.get(url)
         assert response.status_code == 200
@@ -634,6 +656,7 @@ class TestAanbestedingenAPI:
 
     def test_aanbesteding_detail(self, api_client, aanbesteding):
         from django.urls import reverse
+
         url = reverse("api:aanbesteding-detail", kwargs={"pk": aanbesteding.pk})
         response = api_client.get(url)
         assert response.status_code == 200
@@ -641,6 +664,7 @@ class TestAanbestedingenAPI:
 
     def test_filteren_op_status(self, api_client, db):
         from django.urls import reverse
+
         Aanbesteding.objects.create(
             publicatiecode="GUNNING-001",
             naam="Gegunde aanbesteding",
@@ -665,6 +689,7 @@ class TestAanbestedingenAPI:
 
     def test_recente_aanbestedingen_endpoint(self, api_client, aanbesteding):
         from django.urls import reverse
+
         url = reverse("api:aanbesteding-list")
         response = api_client.get(url, {"limit": 5})
         assert response.status_code == 200
@@ -673,6 +698,7 @@ class TestAanbestedingenAPI:
 # ─────────────────────────────────────────────────────────────────
 # Productie-modus configuratie (issue #14)
 # ─────────────────────────────────────────────────────────────────
+
 
 class TestProductieModus:
     """Controleert dat de client correct schakelt tussen demo- en live-modus."""

@@ -1,4 +1,5 @@
 """Gebruikersmodel met 2FA (TOTP) ondersteuning."""
+
 import uuid
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin

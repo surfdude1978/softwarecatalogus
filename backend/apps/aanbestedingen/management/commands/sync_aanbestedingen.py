@@ -7,6 +7,7 @@ Gebruik:
     python manage.py sync_aanbestedingen --max 500
     python manage.py sync_aanbestedingen --demo   # Gebruik altijd demo-data
 """
+
 from django.core.management.base import BaseCommand
 
 
@@ -41,8 +42,7 @@ class Command(BaseCommand):
             self.stdout.write("Demo-modus ingeschakeld — voorbeelddata gebruiken")
 
         self.stdout.write(
-            f"Synchroniseren van aanbestedingen (laatste {options['dagen']} dagen, "
-            f"max {options['max']})..."
+            f"Synchroniseren van aanbestedingen (laatste {options['dagen']} dagen, max {options['max']})..."
         )
 
         # Tijdelijk demo-mode overschrijven indien gevraagd
@@ -59,9 +59,11 @@ class Command(BaseCommand):
             if options["demo"]:
                 settings.TENDERNED_DEMO_MODE = original_setting
 
-        self.stdout.write(self.style.SUCCESS(
-            f"✓ Sync klaar: {resultaat['aangemaakt']} aangemaakt, "
-            f"{resultaat['bijgewerkt']} bijgewerkt, "
-            f"{resultaat['fouten']} fouten "
-            f"({resultaat['duur_seconden']}s)"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"✓ Sync klaar: {resultaat['aangemaakt']} aangemaakt, "
+                f"{resultaat['bijgewerkt']} bijgewerkt, "
+                f"{resultaat['fouten']} fouten "
+                f"({resultaat['duur_seconden']}s)"
+            )
+        )

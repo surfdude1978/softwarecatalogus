@@ -11,6 +11,7 @@ Endpoint: https://www.tenderned.nl/papi/tenderned-rs-tns/v2/publicaties
 
 Ondersteunde publicatietypes incl. EF25 (vrijwillige ex-post-transparantie).
 """
+
 import logging
 from datetime import date, timedelta
 
@@ -374,12 +375,7 @@ class TenderNedClient:
                             resultaten.append(self._normaliseer(item_met_detail, cpv_codes))
 
             # Stoppen bij laatste pagina
-            totaal = (
-                data.get("totalElements")
-                or data.get("totaalAantal")
-                or data.get("total")
-                or 0
-            )
+            totaal = data.get("totalElements") or data.get("totaalAantal") or data.get("total") or 0
             laatste_pagina = data.get("last", False)
             if laatste_pagina or (pagina + 1) * pagina_grootte >= totaal:
                 break
@@ -430,14 +426,8 @@ class TenderNedClient:
 
     def _is_ict_aanbesteding(self, cpv_codes: list[str]) -> bool:
         """Controleer of een aanbesteding ICT-gerelateerd is."""
-        ict_prefixen = tuple(
-            code[:2] for code in ["48000000", "72000000"]
-        )
-        return any(
-            code.startswith(prefix)
-            for code in cpv_codes
-            for prefix in ict_prefixen
-        )
+        ict_prefixen = tuple(code[:2] for code in ["48000000", "72000000"])
+        return any(code.startswith(prefix) for code in cpv_codes for prefix in ict_prefixen)
 
     def _normaliseer(self, item: dict, cpv_codes: list[str]) -> dict:
         """Normaliseer een TenderNed item naar ons datamodel."""
@@ -447,21 +437,11 @@ class TenderNedClient:
             waarde = item.get(veld, [])
             for elem in waarde:
                 if isinstance(elem, dict):
-                    omschrijving = (
-                        elem.get("omschrijving")
-                        or elem.get("description")
-                        or elem.get("naam")
-                        or ""
-                    )
+                    omschrijving = elem.get("omschrijving") or elem.get("description") or elem.get("naam") or ""
                     if omschrijving:
                         omschrijvingen.append(omschrijving)
 
-        publicatiecode = (
-            item.get("publicatiecode")
-            or item.get("id")
-            or item.get("referentie")
-            or ""
-        )
+        publicatiecode = item.get("publicatiecode") or item.get("id") or item.get("referentie") or ""
         url = (
             item.get("url")
             or item.get("tenderNedUrl")
@@ -480,15 +460,9 @@ class TenderNedClient:
             "publicatiecode": str(publicatiecode),
             "naam": item.get("naam") or item.get("title") or item.get("omschrijving", ""),
             "aanbestedende_dienst": (
-                item.get("aanbestedendeDienst")
-                or item.get("aanbestedende_dienst")
-                or authority_naam
+                item.get("aanbestedendeDienst") or item.get("aanbestedende_dienst") or authority_naam
             ),
-            "aanbestedende_dienst_stad": (
-                item.get("stad")
-                or item.get("city")
-                or authority_stad
-            ),
+            "aanbestedende_dienst_stad": (item.get("stad") or item.get("city") or authority_stad),
             "type": self._map_type(item),
             "status": self._map_status(item),
             "procedure": item.get("procedure") or item.get("procedureType") or "",
@@ -503,12 +477,7 @@ class TenderNedClient:
 
     def _map_type(self, item: dict) -> str:
         """Map het aanbestedingstype naar onze choices."""
-        type_str = str(
-            item.get("type")
-            or item.get("aanbestedingstype")
-            or item.get("procurementType")
-            or ""
-        ).lower()
+        type_str = str(item.get("type") or item.get("aanbestedingstype") or item.get("procurementType") or "").lower()
         if "europees" in type_str or "eu" in type_str or "above" in type_str:
             return "europees"
         if "nationaal" in type_str or "national" in type_str:

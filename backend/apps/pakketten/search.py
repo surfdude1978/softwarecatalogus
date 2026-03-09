@@ -1,4 +1,5 @@
 """Meilisearch integratie voor pakketten."""
+
 import logging
 
 import meilisearch
@@ -36,25 +37,31 @@ def configure_index():
         pass  # Index bestaat al
 
     index = get_pakketten_index()
-    index.update_searchable_attributes([
-        "naam",
-        "beschrijving",
-        "leverancier_naam",
-        "gemma_componenten",
-        "standaarden",
-    ])
-    index.update_filterable_attributes([
-        "status",
-        "licentievorm",
-        "leverancier_id",
-        "gemma_component_ids",
-        "standaard_ids",
-    ])
-    index.update_sortable_attributes([
-        "naam",
-        "aangemaakt_op",
-        "aantal_gebruikers",
-    ])
+    index.update_searchable_attributes(
+        [
+            "naam",
+            "beschrijving",
+            "leverancier_naam",
+            "gemma_componenten",
+            "standaarden",
+        ]
+    )
+    index.update_filterable_attributes(
+        [
+            "status",
+            "licentievorm",
+            "leverancier_id",
+            "gemma_component_ids",
+            "standaard_ids",
+        ]
+    )
+    index.update_sortable_attributes(
+        [
+            "naam",
+            "aangemaakt_op",
+            "aantal_gebruikers",
+        ]
+    )
     logger.info("Meilisearch pakketten index geconfigureerd.")
 
 
@@ -111,8 +118,14 @@ def search_pakketten(query, filters=None, sort=None, offset=0, limit=25):
         "offset": offset,
         "limit": limit,
         "attributesToRetrieve": [
-            "id", "naam", "versie", "status", "beschrijving",
-            "leverancier_naam", "licentievorm", "aantal_gebruikers",
+            "id",
+            "naam",
+            "versie",
+            "status",
+            "beschrijving",
+            "leverancier_naam",
+            "licentievorm",
+            "aantal_gebruikers",
         ],
     }
     if filters:
@@ -134,15 +147,17 @@ def reindex_all():
     from apps.pakketten.models import Pakket
 
     configure_index()
-    pakketten = Pakket.objects.filter(
-        status__in=["actief", "concept"]
-    ).select_related("leverancier").prefetch_related("gemma_componenten", "standaarden")
+    pakketten = (
+        Pakket.objects.filter(status__in=["actief", "concept"])
+        .select_related("leverancier")
+        .prefetch_related("gemma_componenten", "standaarden")
+    )
 
     documents = [pakket_to_document(p) for p in pakketten]
     if documents:
         index = get_pakketten_index()
         # Batch toevoegen (max 10000 per batch)
         for i in range(0, len(documents), 10000):
-            batch = documents[i:i + 10000]
+            batch = documents[i : i + 10000]
             index.add_documents(batch)
     logger.info("Herindexering voltooid: %d pakketten", len(documents))

@@ -1,4 +1,5 @@
 """Tests voor beveiligde API endpoints (beheerders)."""
+
 from datetime import timedelta
 
 import pytest
@@ -15,6 +16,7 @@ pytestmark = pytest.mark.django_db
 # ========================
 # Pakketbeheer (aanbod-beheerder)
 # ========================
+
 
 class TestPakketBeheerAPI:
     def test_pakket_aanmaken_als_aanbod_beheerder(self, aanbod_client, leverancier):
@@ -48,12 +50,8 @@ class TestPakketBeheerAPI:
         assert response.status_code == 200
 
     def test_pakket_bijwerken_andere_leverancier_verboden(self, aanbod_client, db):
-        andere_lev = Organisatie.objects.create(
-            naam="Andere Lev", type="leverancier", status="actief"
-        )
-        ander_pakket = Pakket.objects.create(
-            naam="AnderPakket", leverancier=andere_lev, status="actief"
-        )
+        andere_lev = Organisatie.objects.create(naam="Andere Lev", type="leverancier", status="actief")
+        ander_pakket = Pakket.objects.create(naam="AnderPakket", leverancier=andere_lev, status="actief")
         url = reverse("api:pakket-detail", kwargs={"pk": ander_pakket.pk})
         response = aanbod_client.patch(url, {"versie": "2.0"})
         assert response.status_code == 403
@@ -68,6 +66,7 @@ class TestPakketBeheerAPI:
 # Pakketoverzicht (gebruik-beheerder)
 # ========================
 
+
 class TestMijnPakketOverzichtAPI:
     def test_lijst_pakketoverzicht(self, auth_client, pakket_gebruik):
         url = reverse("api:mijn-pakketoverzicht-list")
@@ -80,9 +79,7 @@ class TestMijnPakketOverzichtAPI:
         data = {"pakket": str(pakket2.pk), "status": "in_gebruik"}
         response = auth_client.post(url, data)
         assert response.status_code == 201
-        assert PakketGebruik.objects.filter(
-            pakket=pakket2, organisatie=gemeente
-        ).exists()
+        assert PakketGebruik.objects.filter(pakket=pakket2, organisatie=gemeente).exists()
 
     def test_pakket_verwijderen_uit_overzicht(self, auth_client, pakket_gebruik):
         url = reverse("api:mijn-pakketoverzicht-detail", kwargs={"pk": pakket_gebruik.pk})
@@ -105,6 +102,7 @@ class TestMijnPakketOverzichtAPI:
 # ========================
 # Gluren bij de buren
 # ========================
+
 
 class TestGlurenBijDeBurenAPI:
     def test_gemeente_pakketoverzicht_bekijken(self, auth_client, pakket, gemeente2):
@@ -130,6 +128,7 @@ class TestGlurenBijDeBurenAPI:
 # ========================
 # Koppelingen
 # ========================
+
 
 class TestKoppelingenAPI:
     def test_koppeling_aanmaken(self, auth_client, pakket_gebruik, pakket_gebruik2):
@@ -195,12 +194,12 @@ class TestKoppelingenAPI:
 # Notificaties
 # ========================
 
+
 class TestNotificatiesAPI:
     def test_lijst_notificaties(self, auth_client, gebruik_beheerder):
         from apps.gebruikers.models import Notificatie
-        Notificatie.objects.create(
-            user=gebruik_beheerder, type="info", bericht="Test notificatie"
-        )
+
+        Notificatie.objects.create(user=gebruik_beheerder, type="info", bericht="Test notificatie")
         url = reverse("api:notificatie-list")
         response = auth_client.get(url)
         assert response.status_code == 200
@@ -208,9 +207,8 @@ class TestNotificatiesAPI:
 
     def test_markeer_notificatie_gelezen(self, auth_client, gebruik_beheerder):
         from apps.gebruikers.models import Notificatie
-        n = Notificatie.objects.create(
-            user=gebruik_beheerder, type="info", bericht="Ongelezen"
-        )
+
+        n = Notificatie.objects.create(user=gebruik_beheerder, type="info", bericht="Ongelezen")
         url = reverse("api:notificatie-markeer-gelezen", kwargs={"pk": n.pk})
         response = auth_client.post(url)
         assert response.status_code == 200
@@ -219,6 +217,7 @@ class TestNotificatiesAPI:
 
     def test_markeer_alles_gelezen(self, auth_client, gebruik_beheerder):
         from apps.gebruikers.models import Notificatie
+
         Notificatie.objects.create(user=gebruik_beheerder, type="a", bericht="Een")
         Notificatie.objects.create(user=gebruik_beheerder, type="b", bericht="Twee")
         url = reverse("api:notificatie-markeer-alles-gelezen")
@@ -228,9 +227,8 @@ class TestNotificatiesAPI:
 
     def test_alleen_eigen_notificaties(self, auth_client, functioneel_beheerder):
         from apps.gebruikers.models import Notificatie
-        Notificatie.objects.create(
-            user=functioneel_beheerder, type="info", bericht="Andermans notificatie"
-        )
+
+        Notificatie.objects.create(user=functioneel_beheerder, type="info", bericht="Andermans notificatie")
         url = reverse("api:notificatie-list")
         response = auth_client.get(url)
         assert len(response.data["results"]) == 0
@@ -239,6 +237,7 @@ class TestNotificatiesAPI:
 # ========================
 # Admin: Organisatiebeheer
 # ========================
+
 
 class TestAdminOrganisatieAPI:
     def test_concept_organisaties_ophalen(self, admin_client, concept_organisatie):
