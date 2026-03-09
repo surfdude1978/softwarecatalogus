@@ -17,8 +17,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from apps.organisaties.models import Organisatie
-from apps.pakketten.models import Pakket, PakketGebruik, Koppeling
-from apps.standaarden.models import Standaard, PakketStandaard
+from apps.pakketten.models import Koppeling, Pakket, PakketGebruik
+from apps.standaarden.models import PakketStandaard, Standaard
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class Command(BaseCommand):
 
     def _read_csv(self, filepath):
         """Lees een CSV-bestand en retourneer rijen als dicts."""
-        with open(filepath, "r", encoding="utf-8-sig") as f:
+        with open(filepath, encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter=";")
             return list(reader)
 

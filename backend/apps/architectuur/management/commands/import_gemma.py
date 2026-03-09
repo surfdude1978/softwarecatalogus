@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
         stats = import_ameff(content, dry_run=dry_run)
 
-        self.stdout.write(f"\nResultaat:")
+        self.stdout.write("\nResultaat:")
         self.stdout.write(f"  Elementen gevonden:  {stats['elements_found']}")
         self.stdout.write(f"  Relaties gevonden:   {stats['relationships_found']}")
         self.stdout.write(self.style.SUCCESS(f"  Aangemaakt:          {stats['created']}"))

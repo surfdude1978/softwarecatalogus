@@ -1,5 +1,6 @@
 """Production settings."""
 from decouple import config as env_config
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = False

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Standaard, PakketStandaard
+
+from .models import PakketStandaard, Standaard
 
 
 @admin.register(Standaard)

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Organisatie, Contactpersoon
+
+from .models import Contactpersoon, Organisatie
 
 
 class ContactpersoonInline(admin.TabularInline):

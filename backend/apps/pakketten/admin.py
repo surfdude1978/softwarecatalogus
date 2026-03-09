@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Pakket, PakketGebruik, Koppeling
+
+from .models import Koppeling, Pakket, PakketGebruik
 
 
 @admin.register(Pakket)

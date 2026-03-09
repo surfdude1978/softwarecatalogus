@@ -1,9 +1,9 @@
 """Serializers voor pakketten, gebruik en koppelingen."""
 from rest_framework import serializers
 
+from apps.architectuur.serializers import GemmaComponentListSerializer
 from apps.organisaties.serializers import OrganisatieListSerializer
 from apps.standaarden.serializers import StandaardSerializer
-from apps.architectuur.serializers import GemmaComponentListSerializer
 
 from .models import Koppeling, Pakket, PakketGebruik
 

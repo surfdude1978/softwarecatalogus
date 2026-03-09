@@ -1,5 +1,4 @@
 """Base Django settings voor Softwarecatalogus."""
-import os
 from pathlib import Path
 
 from decouple import config

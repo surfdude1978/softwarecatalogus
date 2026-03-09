@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Pagina, Nieuwsbericht
+
+from .models import Nieuwsbericht, Pagina
 
 
 @admin.register(Pagina)
