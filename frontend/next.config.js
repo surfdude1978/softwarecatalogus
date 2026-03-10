@@ -105,7 +105,9 @@ const nextConfig = {
       beforeFiles: [
         {
           source: "/api/:path*",
-          destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/:path*`,
+          // API_URL is de server-side env var (http://backend:8000 in Docker).
+          // NEXT_PUBLIC_API_URL is alleen client-side; gebruik die NIET hier.
+          destination: `${process.env.API_URL || "http://localhost:8000"}/api/:path*`,
         },
       ],
     };

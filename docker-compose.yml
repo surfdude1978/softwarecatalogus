@@ -111,12 +111,16 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
+      # Geen /app/.next anonymous volume — anders blijft stale compiled code hangen.
+      # Next.js dev schrijft de cache naar ./frontend/.next (via de bind mount).
     ports:
       - "3000:3000"
     env_file:
       - .env
     environment:
+      # Server-side proxy bestemming voor Next.js rewrites (next.config.js).
+      # Moet de Docker service-naam gebruiken, NIET localhost.
+      API_URL: "http://backend:8000"
       # Forceer polling voor file watching op Windows/WSL2 — anders mist Next.js
       # wijzigingen in volume-gemounte bestanden via inotify.
       CHOKIDAR_USEPOLLING: "true"
