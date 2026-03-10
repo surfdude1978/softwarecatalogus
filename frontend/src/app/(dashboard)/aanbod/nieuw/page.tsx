@@ -89,12 +89,19 @@ export default function NieuwPakketPage() {
       const nieuwPakket = await aanmaak.mutateAsync(payload);
 
       // Stap 2: GEMMA-koppelingen instellen indien geselecteerd
+      // Fouten hier blokkeren de navigatie niet — pakket is al aangemaakt.
       if (gemmaIds.length > 0) {
         setIsSavingGemma(true);
         try {
           await api.put(`/api/v1/pakketten/${nieuwPakket.id}/gemma-componenten/`, {
             gemma_component_ids: gemmaIds,
           });
+        } catch {
+          // GEMMA-koppeling mislukt: toon waarschuwing maar ga toch verder
+          setApiError(
+            "Pakket aangemaakt, maar GEMMA-componenten konden niet worden opgeslagen. " +
+            "U kunt deze later instellen via 'Bewerken'."
+          );
         } finally {
           setIsSavingGemma(false);
         }

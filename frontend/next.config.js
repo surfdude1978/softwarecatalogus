@@ -1,5 +1,20 @@
 /** @type {import('next').NextConfig} */
 
+const { execSync } = require("child_process");
+
+// Haal de huidige git commit hash op bij build-tijd.
+// Valt terug op de COMMIT_SHA omgevingsvariabele (CI/CD) of "onbekend".
+function getCommitSha() {
+  if (process.env.COMMIT_SHA) return process.env.COMMIT_SHA;
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "onbekend";
+  }
+}
+
+const COMMIT_SHA = getCommitSha();
+
 const isDev = process.env.NODE_ENV === "development";
 
 // Content Security Policy — strenger in productie, ruimer in development.
@@ -69,6 +84,11 @@ const securityHeaders = [
 
 const nextConfig = {
   output: "standalone",
+
+  // Maak de commit hash beschikbaar als omgevingsvariabele in de browser.
+  env: {
+    NEXT_PUBLIC_COMMIT_SHA: COMMIT_SHA,
+  },
 
   async headers() {
     return [
