@@ -17,8 +17,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Check of de vereiste secrets aanwezig zijn.
+  # GitHub staat geen directe secret-check toe in `if:`, vandaar
+  # deze aparte job die de waarde via een env-var uitleest.
+  check-configuratie:
+    name: Controleer Hetzner-configuratie
+    runs-on: ubuntu-latest
+    outputs:
+      geconfigureerd: ${{ steps.check.outputs.geconfigureerd }}
+    steps:
+      - name: Controleer of secrets zijn ingesteld
+        id: check
+        env:
+          HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+        run: |
+          if [ -n "$HETZNER_SSH_KEY" ]; then
+            echo "geconfigureerd=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "geconfigureerd=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  HETZNER_SSH_KEY niet ingesteld — deploy overgeslagen."
+            echo "Stel HETZNER_HOST, HETZNER_USER en HETZNER_SSH_KEY in"
+            echo "onder Settings → Environments → productie."
+          fi
+
   deploy:
     name: Deploy naar Hetzner (204.168.145.63)
+    needs: check-configuratie
+    if: needs.check-configuratie.outputs.geconfigureerd == 'true'
     runs-on: ubuntu-latest
     environment: productie
 
