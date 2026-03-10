@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from apps.architectuur.serializers import GemmaComponentListSerializer
+from apps.organisaties.models import Organisatie
 from apps.organisaties.serializers import OrganisatieListSerializer
 from apps.standaarden.serializers import StandaardSerializer
 
@@ -77,9 +78,18 @@ class PakketDetailSerializer(serializers.ModelSerializer):
 class PakketCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer voor aanmaken/bewerken van pakketten."""
 
+    # leverancier is optioneel in de payload: als niet meegegeven wordt automatisch
+    # de organisatie van de ingelogde gebruiker gebruikt (aanbod-beheerder maakt
+    # altijd een pakket namens zijn eigen organisatie).
+    leverancier = serializers.PrimaryKeyRelatedField(
+        queryset=Organisatie.objects.all(),
+        required=False,
+    )
+
     class Meta:
         model = Pakket
         fields = [
+            "id",
             "naam",
             "versie",
             "beschrijving",
@@ -91,11 +101,16 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
             "cloud_provider",
             "contactpersoon",
         ]
+        read_only_fields = ["id"]
 
     def create(self, validated_data):
         user = self.context["request"].user
         validated_data["geregistreerd_door"] = user
-        # Non-leverancier gebruikers maken concept-pakketten
+        # Gebruik de organisatie van de ingelogde gebruiker als leverancier
+        # indien niet expliciet opgegeven in de payload.
+        if "leverancier" not in validated_data:
+            validated_data["leverancier"] = user.organisatie
+        # Pakketten aangemaakt door iemand die niet de leverancier is krijgen concept-status
         if not (user.organisatie and user.organisatie == validated_data.get("leverancier")):
             validated_data["status"] = Pakket.Status.CONCEPT
         return super().create(validated_data)
