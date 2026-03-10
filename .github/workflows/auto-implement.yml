@@ -1,0 +1,234 @@
+name: AI PM — Automatische implementatie
+
+on:
+  # Triggert als het label 'auto:implement' wordt toegevoegd
+  issues:
+    types: [labeled]
+  # Of handmatig starten
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue nummer om te implementeren"
+        required: true
+        type: number
+
+permissions:
+  issues: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    name: Controleren of auto-implementatie van toepassing is
+    runs-on: ubuntu-latest
+    outputs:
+      uitvoeren: ${{ steps.check.outputs.uitvoeren }}
+      issue_number: ${{ steps.check.outputs.issue_number }}
+    steps:
+      - name: Controleren
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "uitvoeren=true" >> $GITHUB_OUTPUT
+            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.label.name }}" == "auto:implement" ]]; then
+            echo "uitvoeren=true" >> $GITHUB_OUTPUT
+            echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "uitvoeren=false" >> $GITHUB_OUTPUT
+          fi
+
+  implementeer:
+    name: Issue automatisch implementeren
+    needs: check
+    if: needs.check.outputs.uitvoeren == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository uitchecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git configureren
+        run: |
+          git config user.name "AI Product Manager"
+          git config user.email "ai-pm@softwarecatalogus.nl"
+
+      - name: Feature branch aanmaken
+        id: branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          BRANCH="auto/issue-${ISSUE_NUM}-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "Branch aangemaakt: $BRANCH"
+
+      - name: Label bijwerken naar 'in-progress'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          # Voeg 'auto:in-progress' toe
+          gh issue edit "$ISSUE_NUM" --add-label "auto:in-progress"
+          # Verwijder 'auto:implement' om dubbele runs te voorkomen
+          gh issue edit "$ISSUE_NUM" --remove-label "auto:implement" 2>/dev/null || true
+
+      - name: Issue informatie ophalen
+        id: issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          ISSUE_DATA=$(gh issue view "$ISSUE_NUM" --json title,body,labels,comments)
+          TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "data<<EOF" >> $GITHUB_OUTPUT
+          echo "$ISSUE_DATA" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Node.js instellen (voor Claude Code Agent SDK)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Claude Code Agent SDK installeren
+        run: npm install -g @anthropic-ai/claude-agent-sdk @anthropic-ai/sdk
+
+      - name: Python instellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Docker Compose services starten (voor tests)
+        run: |
+          cp .env.example .env 2>/dev/null || true
+          # Minimal services voor tests
+          docker compose up -d db redis --wait 2>/dev/null || true
+
+      - name: Issue implementeren via Claude Code Agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          TITLE="${{ steps.issue.outputs.title }}"
+
+          node - << 'NODEJS'
+          const { query } = require("@anthropic-ai/claude-agent-sdk");
+
+          const issueNum = process.env.ISSUE_NUM;
+          const issueTitle = process.env.ISSUE_TITLE;
+          const issueData = process.env.ISSUE_DATA;
+
+          async function main() {
+            let result = "";
+            for await (const message of query({
+              prompt: `Je bent een senior fullstack developer voor de Softwarecatalogus (VNG Realisatie).
+
+          Implementeer het volgende GitHub issue volledig en correct:
+
+          Issue #${issueNum}: ${issueTitle}
+
+          Issue details (JSON):
+          ${issueData}
+
+          Instructies:
+          1. Lees eerst CLAUDE.md voor projectcontext en architectuurrichtlijnen
+          2. Analyseer de codebase om te begrijpen wat er al is
+          3. Implementeer de wijzigingen (backend en/of frontend)
+          4. Schrijf tests als dat van toepassing is
+          5. Zorg dat alle bestaande tests blijven slagen
+          6. Commit je wijzigingen met een duidelijke commit message (vermeld "Closes #${issueNum}")
+
+          Wees voorzichtig en implementeer alleen wat het issue vraagt — niet meer.`,
+              options: {
+                cwd: process.cwd(),
+                allowedTools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
+                permissionMode: "acceptEdits",
+                maxTurns: 50,
+                settingSources: ["project"],
+              },
+            })) {
+              if ("result" in message) {
+                result = message.result;
+                console.log("Implementatie voltooid:", result.substring(0, 200));
+              }
+            }
+          }
+
+          main().catch(err => {
+            console.error("Implementatie mislukt:", err);
+            process.exit(1);
+          });
+          NODEJS
+        env:
+          ISSUE_NUM: ${{ needs.check.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+          ISSUE_DATA: ${{ steps.issue.outputs.data }}
+
+      - name: Wijzigingen pushen
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          git push -u origin "$BRANCH"
+
+      - name: Pull Request aanmaken
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          TITLE="${{ steps.issue.outputs.title }}"
+          BRANCH="${{ steps.branch.outputs.branch }}"
+
+          gh pr create \
+            --title "🤖 Auto: ${TITLE}" \
+            --body "$(cat <<EOF
+          ## Automatische implementatie
+
+          Dit pull request is automatisch gegenereerd door de AI Product Manager.
+
+          **Implementeert:** #${ISSUE_NUM}
+
+          ### Checklist voor reviewer
+          - [ ] Code voldoet aan de acceptatiecriteria uit het issue
+          - [ ] Tests zijn aanwezig en slagen
+          - [ ] Geen ongewenste neveneffecten
+          - [ ] Code volgt de projectconventies (zie CLAUDE.md)
+
+          > ⚠️ Automatisch gegenereerde code vereist altijd een menselijke review vóór merge.
+
+          Closes #${ISSUE_NUM}
+          EOF
+          )" \
+            --head "$BRANCH" \
+            --base main \
+            --label "auto:done"
+
+      - name: Label bijwerken
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          gh issue edit "$ISSUE_NUM" --remove-label "auto:in-progress" 2>/dev/null || true
+
+      - name: Mislukt — melding plaatsen
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
+          gh issue comment "$ISSUE_NUM" --body "$(cat <<'EOF'
+          <!-- pm-triage-bot -->
+          ### 🤖 Auto-implementatie mislukt
+
+          De automatische implementatie kon dit issue niet volledig oplossen.
+          Dit kan komen doordat het issue te complex is, of doordat er externe afhankelijkheden zijn.
+
+          **Aanbeveling:** Verwijder het `auto:implement` label en implementeer handmatig.
+          EOF
+          )"
+          gh issue edit "$ISSUE_NUM" --remove-label "auto:in-progress" 2>/dev/null || true
