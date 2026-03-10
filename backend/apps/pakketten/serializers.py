@@ -16,6 +16,8 @@ class PakketListSerializer(serializers.ModelSerializer):
     leverancier_naam = serializers.CharField(source="leverancier.naam", read_only=True)
     licentievorm_display = serializers.CharField(source="get_licentievorm_display", read_only=True)
     aantal_gebruikers = serializers.IntegerField(read_only=True)
+    geregistreerd_door_naam = serializers.CharField(source="geregistreerd_door.naam", read_only=True, default=None)
+    geregistreerd_door_email = serializers.CharField(source="geregistreerd_door.email", read_only=True, default=None)
 
     class Meta:
         model = Pakket
@@ -30,6 +32,9 @@ class PakketListSerializer(serializers.ModelSerializer):
             "licentievorm",
             "licentievorm_display",
             "aantal_gebruikers",
+            "geregistreerd_door_naam",
+            "geregistreerd_door_email",
+            "aangemaakt_op",
         ]
 
 

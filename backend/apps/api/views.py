@@ -101,7 +101,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy", "stel_gemma_in"]:
             return [IsAanbodBeheerder()]
-        if self.action == "fiatteren":
+        if self.action in ["fiatteren", "afwijzen"]:
             return [IsFunctioneelBeheerder()]
         return [AllowAny()]
 
@@ -135,6 +135,41 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
             extra={"vorige_status": "concept"},
         )
         return Response(PakketDetailSerializer(pakket, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"])
+    def afwijzen(self, request, pk=None):
+        """Wijs een concept-pakket af met een verplichte reden."""
+        pakket = self.get_object()
+        if pakket.status != Pakket.Status.CONCEPT:
+            return Response(
+                {"detail": "Alleen concept-pakketten kunnen worden afgewezen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        reden = request.data.get("reden", "").strip()
+        if not reden:
+            return Response(
+                {"detail": "Een reden voor afwijzing is verplicht."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        pakket.status = Pakket.Status.INGETROKKEN
+        pakket.save(update_fields=["status", "gewijzigd_op"])
+        log_actie(
+            request,
+            AuditLog.Actie.AFGEWEZEN,
+            instance=pakket,
+            extra={"vorige_status": "concept", "reden": reden},
+        )
+        # Stuur notificatie naar de indiener
+        if pakket.geregistreerd_door_id:
+            Notificatie.objects.create(
+                user_id=pakket.geregistreerd_door_id,
+                type="pakket_afgewezen",
+                bericht=(
+                    f'Uw pakket "{pakket.naam}" is afgewezen door de functioneel beheerder. '
+                    f"Reden: {reden}"
+                ),
+            )
+        return Response({"detail": f'Pakket "{pakket.naam}" afgewezen.'})
 
     @action(detail=True, methods=["get", "put"], url_path="gemma-componenten", url_name="gemma-componenten")
     def stel_gemma_in(self, request, pk=None):

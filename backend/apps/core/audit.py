@@ -31,6 +31,7 @@ class AuditLog(models.Model):
         EXPORT = "export", _("Export")
         IMPORT = "import", _("Import")
         GEFIATEERD = "gefiateerd", _("Gefiateerd")
+        AFGEWEZEN = "afgewezen", _("Afgewezen")
 
     # Wie
     actor_id = models.CharField(
