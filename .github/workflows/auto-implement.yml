@@ -11,6 +11,10 @@ on:
         description: "Issue nummer om te implementeren"
         required: true
         type: number
+  # Push-trigger zodat required status checks niet falen.
+  # De check-job handelt dit af door direct uitvoeren=false te zetten.
+  push:
+    branches: [main, master]
 
 permissions:
   issues: write
@@ -31,11 +35,12 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "uitvoeren=true" >> $GITHUB_OUTPUT
             echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.label.name }}" == "auto:implement" ]]; then
+          elif [[ "${{ github.event_name }}" == "issues" && "${{ github.event.label.name }}" == "auto:implement" ]]; then
             echo "uitvoeren=true" >> $GITHUB_OUTPUT
             echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           else
             echo "uitvoeren=false" >> $GITHUB_OUTPUT
+            echo "Overgeslagen: event=${{ github.event_name }}, label=${{ github.event.label.name }}"
           fi
 
   implementeer:
@@ -94,79 +99,30 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Claude Code Agent SDK installeren
-        run: npm install -g @anthropic-ai/claude-agent-sdk @anthropic-ai/sdk
-
       - name: Python instellen
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/pm/requirements.txt
+
+      - name: Afhankelijkheden installeren
+        run: pip install -r scripts/pm/requirements.txt
 
       - name: Docker Compose services starten (voor tests)
         run: |
           cp .env.example .env 2>/dev/null || true
-          # Minimal services voor tests
           docker compose up -d db redis --wait 2>/dev/null || true
 
-      - name: Issue implementeren via Claude Code Agent
+      - name: Issue implementeren via Claude API
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          ISSUE_NUM="${{ needs.check.outputs.issue_number }}"
-          TITLE="${{ steps.issue.outputs.title }}"
-
-          node - << 'NODEJS'
-          const { query } = require("@anthropic-ai/claude-agent-sdk");
-
-          const issueNum = process.env.ISSUE_NUM;
-          const issueTitle = process.env.ISSUE_TITLE;
-          const issueData = process.env.ISSUE_DATA;
-
-          async function main() {
-            let result = "";
-            for await (const message of query({
-              prompt: `Je bent een senior fullstack developer voor de Softwarecatalogus (VNG Realisatie).
-
-          Implementeer het volgende GitHub issue volledig en correct:
-
-          Issue #${issueNum}: ${issueTitle}
-
-          Issue details (JSON):
-          ${issueData}
-
-          Instructies:
-          1. Lees eerst CLAUDE.md voor projectcontext en architectuurrichtlijnen
-          2. Analyseer de codebase om te begrijpen wat er al is
-          3. Implementeer de wijzigingen (backend en/of frontend)
-          4. Schrijf tests als dat van toepassing is
-          5. Zorg dat alle bestaande tests blijven slagen
-          6. Commit je wijzigingen met een duidelijke commit message (vermeld "Closes #${issueNum}")
-
-          Wees voorzichtig en implementeer alleen wat het issue vraagt — niet meer.`,
-              options: {
-                cwd: process.cwd(),
-                allowedTools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
-                permissionMode: "acceptEdits",
-                maxTurns: 50,
-                settingSources: ["project"],
-              },
-            })) {
-              if ("result" in message) {
-                result = message.result;
-                console.log("Implementatie voltooid:", result.substring(0, 200));
-              }
-            }
-          }
-
-          main().catch(err => {
-            console.error("Implementatie mislukt:", err);
-            process.exit(1);
-          });
-          NODEJS
-        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUM: ${{ needs.check.outputs.issue_number }}
           ISSUE_TITLE: ${{ steps.issue.outputs.title }}
           ISSUE_DATA: ${{ steps.issue.outputs.data }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/pm/implement_issue.py
 
       - name: Wijzigingen pushen
         env:
