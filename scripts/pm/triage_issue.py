@@ -424,8 +424,15 @@ def main():
         triageer_issue(args.repo, args.issue, github_token, anthropic_key)
     except Exception as e:
         import traceback
+        tb = traceback.format_exc()
         print("FOUT tijdens triage:", file=sys.stderr)
-        traceback.print_exc()
+        print(tb, file=sys.stderr)
+        # Post fout als comment op het issue zodat het zichtbaar is
+        try:
+            fout_comment = f"<!-- pm-triage-bot-error -->\n### 🤖 Triage mislukt\n\n```\n{tb}\n```"
+            plaats_comment(args.repo, args.issue, fout_comment, github_token)
+        except Exception:
+            pass
         sys.exit(1)
 
 
