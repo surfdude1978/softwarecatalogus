@@ -12,6 +12,8 @@ djangorestframework-simplejwt>=5.3,<6.0
 django-allauth>=65.0,<66.0
 django-otp>=1.5,<2.0
 qrcode>=7.4,<8.0
+cryptography>=42.0,<46.0
+cffi>=1.17,<2.0
 
 # Permissions
 django-guardian>=2.4,<3.0

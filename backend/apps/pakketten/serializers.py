@@ -114,9 +114,14 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
         # Gebruik de organisatie van de ingelogde gebruiker als leverancier
         # indien niet expliciet opgegeven in de payload.
         if "leverancier" not in validated_data:
+            if not user.organisatie:
+                raise serializers.ValidationError({"leverancier": "Leverancier is verplicht. Kies een organisatie."})
             validated_data["leverancier"] = user.organisatie
-        # Pakketten aangemaakt door iemand die niet de leverancier is krijgen concept-status
-        if not (user.organisatie and user.organisatie == validated_data.get("leverancier")):
+        # Pakketten aangemaakt door de eigen leverancier worden direct actief;
+        # pakketten aangemaakt namens een andere leverancier krijgen concept-status.
+        if user.organisatie and user.organisatie == validated_data.get("leverancier"):
+            validated_data["status"] = Pakket.Status.ACTIEF
+        else:
             validated_data["status"] = Pakket.Status.CONCEPT
         return super().create(validated_data)
 
