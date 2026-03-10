@@ -45,9 +45,7 @@ class TestPakketAfwijzen:
         response = api_client.post(url, {"reden": "Reden"}, format="json")
         assert response.status_code == 401
 
-    def test_afwijzen_stuurt_notificatie_naar_indiener(
-        self, admin_client, concept_pakket, gebruik_beheerder
-    ):
+    def test_afwijzen_stuurt_notificatie_naar_indiener(self, admin_client, concept_pakket, gebruik_beheerder):
         concept_pakket.geregistreerd_door = gebruik_beheerder
         concept_pakket.save(update_fields=["geregistreerd_door"])
 
