@@ -164,10 +164,7 @@ class PakketViewSet(AuditLogMixin, viewsets.ModelViewSet):
             Notificatie.objects.create(
                 user_id=pakket.geregistreerd_door_id,
                 type="pakket_afgewezen",
-                bericht=(
-                    f'Uw pakket "{pakket.naam}" is afgewezen door de functioneel beheerder. '
-                    f"Reden: {reden}"
-                ),
+                bericht=(f'Uw pakket "{pakket.naam}" is afgewezen door de functioneel beheerder. Reden: {reden}'),
             )
         return Response({"detail": f'Pakket "{pakket.naam}" afgewezen.'})
 
