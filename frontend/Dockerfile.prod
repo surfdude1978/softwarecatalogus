@@ -29,19 +29,19 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Non-root user (overeenkomstig Kubernetes securityContext uid 1000)
-RUN addgroup --system --gid 1000 nodejs \
-    && adduser --system --uid 1000 nextjs
+# node:20-alpine levert al een 'node' user/group met uid/gid 1000.
+# Geen nieuwe groep aanmaken — dat geeft een gid-conflict.
 
-# Kopieer alleen wat nodig is voor productie
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+# next.config.js gebruikt output: "standalone": kopieer alleen de
+# standalone-bundle + statische bestanden (geen node_modules nodig).
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
-USER nextjs
+USER node
 EXPOSE 3000
 
-# next start luistert op $PORT (3000)
-CMD ["npm", "start"]
+# Standalone server — gegenereerd door Next.js bij output: "standalone"
+CMD ["node", "server.js"]
