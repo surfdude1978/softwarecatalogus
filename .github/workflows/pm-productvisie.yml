@@ -1,0 +1,61 @@
+name: AI PM — Productvisie & Roadmap Update
+
+on:
+  # Elke eerste van de maand om 07:00 UTC
+  schedule:
+    - cron: "0 7 1 * *"
+
+  # Handmatig activeren (bijv. na grote sprint of release)
+  workflow_dispatch:
+    inputs:
+      reden:
+        description: "Reden voor handmatige update (optioneel)"
+        required: false
+        type: string
+
+permissions:
+  contents: write   # Document committen naar main
+  issues: write     # Comment op tracking issue plaatsen
+
+jobs:
+  update-productvisie:
+    name: Productvisie bijwerken
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository uitchecken
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Python instellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/pm/requirements.txt
+
+      - name: Afhankelijkheden installeren
+        run: pip install -r scripts/pm/requirements.txt
+
+      - name: Productvisie bijwerken
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/pm/update_productvisie.py
+
+      - name: Workflow-samenvatting
+        if: always()
+        run: |
+          echo "### AI PM — Productvisie Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Datum** | $(date '+%d-%m-%Y') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ inputs.reden }}" ]; then
+            echo "| **Reden** | ${{ inputs.reden }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[Bekijk bijgewerkt document](https://github.com/${{ github.repository }}/blob/main/docs/product/PRODUCTVISIE-ROADMAP.md)" >> $GITHUB_STEP_SUMMARY
