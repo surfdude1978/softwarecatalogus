@@ -1,0 +1,56 @@
+name: Deploy naar Hetzner
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: "Build overslaan (gebruik bestaande images)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-hetzner
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy naar Hetzner (204.168.145.63)
+    runs-on: ubuntu-latest
+    environment: productie
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/softwarecatalogus
+
+            echo "=== Deploy gestart: $(date) ==="
+
+            # Code updaten
+            git fetch origin
+            git reset --hard origin/main 2>/dev/null || git reset --hard origin/master
+
+            # Deploy uitvoeren
+            bash infra/scripts/deploy.sh
+
+            echo "=== Deploy klaar: $(date) ==="
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl -sf --max-time 30 "http://${{ secrets.HETZNER_HOST }}/api/v1/pakketten/?page_size=1" \
+            && echo "Health check geslaagd" \
+            || echo "Health check mislukt (niet fataal bij eerste deploy)"
+        continue-on-error: true

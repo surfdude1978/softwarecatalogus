@@ -1,0 +1,58 @@
+name: AI PM — Issue Triage
+
+on:
+  issues:
+    types: [opened, reopened]
+  # Handmatig activeren voor bestaande issues
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue nummer om te triageren"
+        required: true
+        type: number
+
+permissions:
+  issues: write    # Labels + comments plaatsen
+  contents: read   # CLAUDE.md lezen
+
+jobs:
+  triage:
+    name: Issue triageren
+    runs-on: ubuntu-latest
+    # Geen triage op pull requests die als issues verschijnen
+    if: github.event.issue.pull_request == null || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Repository uitchecken
+        uses: actions/checkout@v4
+
+      - name: Python instellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/pm/requirements.txt
+
+      - name: Afhankelijkheden installeren
+        run: pip install -r scripts/pm/requirements.txt
+
+      - name: Issue triageren
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        id: triage
+        run: python scripts/pm/triage_issue.py
+
+      - name: Samenvatting tonen
+        if: always()
+        run: |
+          echo "### Triage Resultaat" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Veld | Waarde |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Issue | #${{ github.event.issue.number || inputs.issue_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prioriteit | ${{ steps.triage.outputs.prioriteit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Complexiteit | ${{ steps.triage.outputs.complexiteit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Auto-implementeerbaar | ${{ steps.triage.outputs.auto_implementeerbaar }} |" >> $GITHUB_STEP_SUMMARY
