@@ -310,7 +310,25 @@ Hieronder volgt de volledige projectdocumentatie (CLAUDE.md):
 
 Analyseer het issue zorgvuldig en geef een gestructureerde triageuitkomst terug.
 Gebruik ALTIJD het Nederlands in je antwoorden.
-Wees concreet en praktisch in acceptatiecriteria en technische aanpak."""
+Wees concreet en praktisch in acceptatiecriteria en technische aanpak.
+
+BELANGRIJK: Geef je antwoord UITSLUITEND als geldig JSON-object, zonder extra tekst ervoor of erna.
+Het JSON-object moet exact deze velden bevatten:
+{
+  "prioriteit": "kritiek"|"hoog"|"gemiddeld"|"laag",
+  "type": "bug"|"feature"|"enhancement"|"docs"|"infra"|"vraag",
+  "componenten": ["backend"|"frontend"|"api"|"auth"|"gemma"|"zoeken"|"export"|"documenten"|"organisaties"|"pakketten"|"infra"],
+  "fase": "fase-1"|"fase-2"|"fase-3"|"fase-4"|"fase-5"|null,
+  "eis_of_wens": "eis"|"wens"|"intern",
+  "complexiteit": "klein"|"gemiddeld"|"groot"|"epic",
+  "auto_implementeerbaar": true|false,
+  "samenvatting": "string",
+  "acceptatiecriteria": ["string"],
+  "technische_aanpak": "string",
+  "rationale": "string",
+  "gerelateerde_eisen": ["string"],
+  "risicos": ["string"]
+}"""
 
     user_message = f"""Triageer het volgende GitHub issue:
 
@@ -328,22 +346,26 @@ Voer een volledige triage uit en geef alle velden terug."""
     response = client.messages.create(
         model="claude-opus-4-6",
         max_tokens=4096,
-        thinking={"type": "adaptive"},
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
-        output_config={
-            "format": {
-                "type": "json_schema",
-                "schema": IssueTriage.model_json_schema(),
-            }
-        },
     )
 
-    # Parseer gestructureerde output
+    # Parseer JSON uit de response tekst
     response_text = next(
         block.text for block in response.content if block.type == "text"
     )
-    triage_data = json.loads(response_text)
+
+    # Extraheer JSON-blok uit markdown code block indien aanwezig
+    json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response_text, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        # Probeer de volledige tekst te parsen, of zoek naar het eerste {
+        start = response_text.find("{")
+        end = response_text.rfind("}") + 1
+        json_str = response_text[start:end] if start >= 0 else response_text
+
+    triage_data = json.loads(json_str)
     triage = IssueTriage(**triage_data)
 
     print(f"Triage voltooid: {triage.prioriteit} / {triage.type} / {triage.complexiteit}")
