@@ -314,7 +314,7 @@ Wees concreet en praktisch in acceptatiecriteria en technische aanpak.
 
 BELANGRIJK: Geef je antwoord UITSLUITEND als geldig JSON-object, zonder extra tekst ervoor of erna.
 Het JSON-object moet exact deze velden bevatten:
-{
+{{
   "prioriteit": "kritiek"|"hoog"|"gemiddeld"|"laag",
   "type": "bug"|"feature"|"enhancement"|"docs"|"infra"|"vraag",
   "componenten": ["backend"|"frontend"|"api"|"auth"|"gemma"|"zoeken"|"export"|"documenten"|"organisaties"|"pakketten"|"infra"],
@@ -328,7 +328,7 @@ Het JSON-object moet exact deze velden bevatten:
   "rationale": "string",
   "gerelateerde_eisen": ["string"],
   "risicos": ["string"]
-}"""
+}}"""
 
     user_message = f"""Triageer het volgende GitHub issue:
 
