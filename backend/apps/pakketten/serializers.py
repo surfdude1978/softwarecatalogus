@@ -115,9 +115,7 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
         # indien niet expliciet opgegeven in de payload.
         if "leverancier" not in validated_data:
             if not user.organisatie:
-                raise serializers.ValidationError(
-                    {"leverancier": "Leverancier is verplicht. Kies een organisatie."}
-                )
+                raise serializers.ValidationError({"leverancier": "Leverancier is verplicht. Kies een organisatie."})
             validated_data["leverancier"] = user.organisatie
         # Pakketten aangemaakt door de eigen leverancier worden direct actief;
         # pakketten aangemaakt namens een andere leverancier krijgen concept-status.
