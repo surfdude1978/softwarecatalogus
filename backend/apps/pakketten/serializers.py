@@ -89,6 +89,7 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pakket
         fields = [
+            "id",
             "naam",
             "versie",
             "beschrijving",
@@ -100,6 +101,7 @@ class PakketCreateUpdateSerializer(serializers.ModelSerializer):
             "cloud_provider",
             "contactpersoon",
         ]
+        read_only_fields = ["id"]
 
     def create(self, validated_data):
         user = self.context["request"].user
