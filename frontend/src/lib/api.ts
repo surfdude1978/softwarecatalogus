@@ -6,8 +6,9 @@
  *   - "localStorage"→ Bearer-token uit localStorage (development, standaard)
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Gebruik lege base URL zodat API-calls via Next.js rewrites lopen (next.config.js).
+// Next.js stuurt /api/:path* server-side door naar de backend — geen CORS/CSP problemen.
+const API_BASE_URL = "";
 
 /** True wanneer de app in cookie-auth-modus draait (productie). */
 export const AUTH_COOKIE_MODE =
