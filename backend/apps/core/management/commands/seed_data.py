@@ -556,6 +556,8 @@ class Command(BaseCommand):
                 "rol": User.Rol.FUNCTIONEEL_BEHEERDER,
                 "status": User.Status.ACTIEF,
                 "totp_enabled": False,
+                "is_staff": True,
+                "is_superuser": True,
             },
         )
         if created:
