@@ -124,6 +124,15 @@ services:
     depends_on:
       - backend
 
+  mcp-server:
+    build:
+      context: ./mcp_server
+      dockerfile: Dockerfile
+    environment:
+      SWC_API_URL: http://backend:8000
+    depends_on:
+      - backend
+
   nginx:
     image: nginx:alpine
     ports:

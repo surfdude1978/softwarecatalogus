@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "softwarecatalogus": {
+      "command": "python",
+      "args": ["-m", "mcp_server"],
+      "env": {
+        "SWC_API_URL": "http://localhost:8000"
+      }
+    }
+  }
+}
