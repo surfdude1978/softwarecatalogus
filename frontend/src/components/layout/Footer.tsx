@@ -1,5 +1,7 @@
 export function Footer() {
   const commitSha = process.env.NEXT_PUBLIC_COMMIT_SHA;
+  const buildTimestamp = process.env.NEXT_PUBLIC_BUILD_TIMESTAMP;
+  const showCommit = commitSha && commitSha !== "onbekend";
 
   return (
     <footer className="border-t border-gray-200 bg-white">
@@ -7,11 +9,9 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-gray-500">
             &copy; {new Date().getFullYear()} VNG Realisatie &mdash; Softwarecatalogus
-            {commitSha && (
-              <span className="ml-2 font-mono text-xs text-gray-400" title="Versie (git commit)">
-                v{commitSha}
-              </span>
-            )}
+            <span className="ml-2 font-mono text-xs text-gray-400" title="Build-versie">
+              {showCommit ? `v${commitSha}` : ""}{showCommit && buildTimestamp ? " · " : ""}{buildTimestamp ?? ""}
+            </span>
           </p>
           <div className="flex gap-6">
             <a

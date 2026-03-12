@@ -15,6 +15,23 @@ function getCommitSha() {
 
 const COMMIT_SHA = getCommitSha();
 
+// Build-timestamp in dd-mm-yyyy hh:mm formaat (Nederlandse tijdzone)
+function getBuildTimestamp() {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return fmt.format(now);
+}
+
+const BUILD_TIMESTAMP = getBuildTimestamp();
+
 const isDev = process.env.NODE_ENV === "development";
 
 // Content Security Policy — strenger in productie, ruimer in development.
@@ -88,6 +105,7 @@ const nextConfig = {
   // Maak de commit hash beschikbaar als omgevingsvariabele in de browser.
   env: {
     NEXT_PUBLIC_COMMIT_SHA: COMMIT_SHA,
+    NEXT_PUBLIC_BUILD_TIMESTAMP: BUILD_TIMESTAMP,
   },
 
   async headers() {

@@ -30,11 +30,12 @@ def get_pakketten_index():
 
 def configure_index():
     """Configureer de Meilisearch pakketten index."""
+    client = get_client()
     try:
-        client = get_client()
         client.create_index("pakketten", {"primaryKey": "id"})
     except meilisearch.errors.MeilisearchApiError:
-        pass  # Index bestaat al
+        # Index bestaat al — zorg dat primaryKey correct is ingesteld
+        client.index("pakketten").update(primary_key="id")
 
     index = get_pakketten_index()
     index.update_searchable_attributes(
