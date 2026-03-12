@@ -195,15 +195,23 @@ async def lijst_gemma_componenten(
 
 
 @mcp.tool()
-async def gemma_kaart() -> dict:
+async def gemma_kaart(organisatie: str | None = None) -> dict:
     """Haal de volledige GEMMA-architectuurkaart op.
 
     Retourneert een hierarchische boomstructuur van GEMMA-componenten
     met per component de bijbehorende softwarepakketten.
     Ideaal om te zien welke pakketten gemeenten gebruiken per
     GEMMA-referentiecomponent.
+
+    Args:
+        organisatie: Optioneel UUID van een organisatie om alleen hun
+            pakketten te tonen. Gebruik lijst_organisaties om het UUID
+            van een gemeente te vinden.
     """
-    return await client.get("/api/v1/gemma/kaart/")
+    return await client.get(
+        "/api/v1/gemma/kaart/",
+        params={"organisatie": organisatie},
+    )
 
 
 # ---------------------------------------------------------------------------

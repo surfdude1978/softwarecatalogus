@@ -306,10 +306,16 @@ class GemmaKaartView(_APIView):
             )
             .order_by("naam")
         )
+        ctx: dict = {"request": request, "_niveau": 0}
+        # Optioneel filteren op organisatie (UUID) — toont dan alleen
+        # pakketten die door die organisatie gebruikt worden.
+        organisatie_id = request.query_params.get("organisatie")
+        if organisatie_id:
+            ctx["_filter_organisatie"] = organisatie_id
         serializer = GemmaKaartComponentSerializer(
             root_componenten,
             many=True,
-            context={"request": request, "_niveau": 0},
+            context=ctx,
         )
         return Response({"componenten": serializer.data})
 

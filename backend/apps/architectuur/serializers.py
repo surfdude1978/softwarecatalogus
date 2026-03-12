@@ -44,6 +44,24 @@ class GemmaKaartComponentSerializer(serializers.ModelSerializer):
     def get_pakketten(self, obj):
         from apps.pakketten.models import Pakket, PakketGebruik
 
+        # Filter op specifieke organisatie (via ?organisatie=<uuid>)
+        filter_org = self.context.get("_filter_organisatie")
+        if filter_org:
+            pg_qs = PakketGebruik.objects.filter(
+                pakket__gemma_componenten=obj,
+                organisatie_id=filter_org,
+            ).select_related("pakket", "pakket__leverancier")
+            return [
+                {
+                    "id": str(pg.pakket.id),
+                    "naam": pg.pakket.naam,
+                    "leverancier_naam": (pg.pakket.leverancier.naam if pg.pakket.leverancier else ""),
+                    "status_gebruik": pg.status,
+                    "licentievorm": pg.pakket.licentievorm or "",
+                }
+                for pg in pg_qs
+            ]
+
         request = self.context.get("request")
         if request and request.user.is_authenticated and getattr(request.user, "organisatie", None):
             # Geauthenticeerde gebruiker: toon eigen pakketgebruik
