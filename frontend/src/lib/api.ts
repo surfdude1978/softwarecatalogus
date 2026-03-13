@@ -6,8 +6,18 @@
  *   - "localStorage"→ Bearer-token uit localStorage (development, standaard)
  */
 
+/**
+ * In de browser gebruiken we relatieve URLs ("/api/...") zodat Next.js
+ * rewrites de requests proxyen naar de backend. Dit voorkomt CORS-problemen
+ * en werkt met elke frontend-URL (localhost, Cloudflare tunnel, productie).
+ *
+ * Server-side (SSR) gebruiken we de volledige backend-URL zodat Next.js
+ * de backend direct kan bereiken via het interne Docker-netwerk.
+ */
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  typeof window !== "undefined"
+    ? ""  // Browser: relatieve URL → Next.js rewrite proxyt naar backend
+    : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
 
 /** True wanneer de app in cookie-auth-modus draait (productie). */
 export const AUTH_COOKIE_MODE =
