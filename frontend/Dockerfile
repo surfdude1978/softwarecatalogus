@@ -8,7 +8,7 @@ RUN npm install
 COPY . .
 
 ENV API_URL=http://backend:8000
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=http://backend:8000
 
 EXPOSE 3000
 
