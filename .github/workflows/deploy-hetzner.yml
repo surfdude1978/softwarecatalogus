@@ -1,25 +1,25 @@
-name: Deploy naar Hetzner
+name: Deploy naar Hetzner Test
 
 on:
   push:
     branches:
       - main
-      - master
   workflow_dispatch:
     inputs:
-      skip_build:
-        description: "Build overslaan (gebruik bestaande images)"
+      seed_data:
+        description: "Seed data opnieuw laden (overschrijft handmatige wijzigingen)"
         type: boolean
         default: false
+      rebuild_search:
+        description: "Zoekindex volledig herbouwen"
+        type: boolean
+        default: true
 
 concurrency:
   group: deploy-hetzner
   cancel-in-progress: false
 
 jobs:
-  # Check of de vereiste secrets aanwezig zijn.
-  # GitHub staat geen directe secret-check toe in `if:`, vandaar
-  # deze aparte job die de waarde via een env-var uitleest.
   check-configuratie:
     name: Controleer Hetzner-configuratie
     runs-on: ubuntu-latest
@@ -37,45 +37,95 @@ jobs:
             echo "geconfigureerd=false" >> "$GITHUB_OUTPUT"
             echo "⚠️  HETZNER_SSH_KEY niet ingesteld — deploy overgeslagen."
             echo "Stel HETZNER_HOST, HETZNER_USER en HETZNER_SSH_KEY in"
-            echo "onder Settings → Environments → productie."
+            echo "onder Settings → Secrets and variables → Actions."
           fi
 
   deploy:
-    name: Deploy naar Hetzner (204.168.145.63)
+    name: Deploy naar Hetzner testserver
     needs: check-configuratie
     if: needs.check-configuratie.outputs.geconfigureerd == 'true'
     runs-on: ubuntu-latest
-    environment: productie
+    environment: test
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          SEED_DATA: ${{ inputs.seed_data || 'false' }}
+          REBUILD_SEARCH: ${{ inputs.rebuild_search || 'true' }}
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: ${{ secrets.HETZNER_USER }}
           key: ${{ secrets.HETZNER_SSH_KEY }}
-          script_stop: true
+          envs: SEED_DATA,REBUILD_SEARCH
           script: |
             set -euo pipefail
-            cd /opt/softwarecatalogus
+            cd /root/softwarecatalogus
 
             echo "=== Deploy gestart: $(date) ==="
+            echo "Commit: ${{ github.sha }}"
 
-            # Code updaten
+            # --- Code updaten ---
+            echo "[1/5] Code updaten..."
             git fetch origin
-            git reset --hard origin/main 2>/dev/null || git reset --hard origin/master
+            git reset --hard origin/main
 
-            # Deploy uitvoeren
-            bash infra/scripts/deploy.sh
+            # --- Docker images bijwerken ---
+            echo "[2/5] Docker containers bijwerken..."
+            docker compose build --pull
+            docker compose up -d --remove-orphans
 
-            echo "=== Deploy klaar: $(date) ==="
+            # --- Database migraties ---
+            echo "[3/5] Database migraties..."
+            sleep 10  # Wacht tot PostgreSQL klaar is
+            docker compose exec -T backend python manage.py migrate --noinput
+
+            # --- Seed data (alleen bij eerste keer of handmatig) ---
+            if [ "$SEED_DATA" = "true" ]; then
+              echo "[4/5] Seed data laden..."
+              docker compose exec -T backend python manage.py seed_data
+            else
+              echo "[4/5] Seed data overgeslagen (testdata behouden)"
+            fi
+
+            # --- Zoekindex ---
+            if [ "$REBUILD_SEARCH" = "true" ]; then
+              echo "[5/5] Zoekindex bijwerken..."
+              docker compose exec -T backend python manage.py reindex_search || \
+                echo "Zoekindex update overgeslagen"
+            else
+              echo "[5/5] Zoekindex overgeslagen"
+            fi
+
+            echo ""
+            echo "=== Status ==="
+            docker compose ps
+            echo ""
+            echo "Deploy voltooid: $(date)"
+            echo "Commit: $(git log -1 --format='%h — %s (%an)')"
 
       - name: Health check
         run: |
-          sleep 15
-          curl -sf --max-time 30 "http://${{ secrets.HETZNER_HOST }}/api/v1/pakketten/?page_size=1" \
-            && echo "Health check geslaagd" \
-            || echo "Health check mislukt (niet fataal bij eerste deploy)"
+          sleep 20
+          # Probeer via tunnel/domein of direct IP
+          curl -sf --max-time 30 "http://${{ secrets.HETZNER_HOST }}:3000/" \
+            && echo "✅ Frontend bereikbaar" \
+            || echo "⚠️ Frontend niet bereikbaar (check tunnel/firewall)"
+          curl -sf --max-time 30 "http://${{ secrets.HETZNER_HOST }}:8000/api/v1/pakketten/?page_size=1" \
+            && echo "✅ Backend API bereikbaar" \
+            || echo "⚠️ Backend niet bereikbaar (check tunnel/firewall)"
         continue-on-error: true
+
+      - name: Deploy samenvatting
+        run: |
+          echo "### 🚀 Deploy naar Hetzner testserver" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Server** | \`${{ secrets.HETZNER_HOST }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Seed data** | ${{ inputs.seed_data || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Zoekindex** | ${{ inputs.rebuild_search || 'true' }} |" >> $GITHUB_STEP_SUMMARY
