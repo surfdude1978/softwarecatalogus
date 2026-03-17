@@ -117,6 +117,8 @@ services:
     env_file:
       - .env
     environment:
+      # Backend URL voor server-side rewrites (Docker-intern netwerk)
+      NEXT_PUBLIC_API_URL: http://backend:8000
       # Forceer polling voor file watching op Windows/WSL2 — anders mist Next.js
       # wijzigingen in volume-gemounte bestanden via inotify.
       CHOKIDAR_USEPOLLING: "true"

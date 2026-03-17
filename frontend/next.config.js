@@ -102,6 +102,11 @@ const securityHeaders = [
 const nextConfig = {
   output: "standalone",
 
+  // Voorkom dat Next.js automatisch trailing slashes verwijdert (308 redirect).
+  // Django/DRF verwacht trailing slashes (APPEND_SLASH); zonder deze optie
+  // ontstaat een oneindige redirect-loop: Next.js 308 ↔ Django 301.
+  skipTrailingSlashRedirect: true,
+
   // Maak de commit hash beschikbaar als omgevingsvariabele in de browser.
   env: {
     NEXT_PUBLIC_COMMIT_SHA: COMMIT_SHA,
@@ -119,11 +124,15 @@ const nextConfig = {
   },
 
   async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     return {
       beforeFiles: [
+        // Regex-capture zodat de trailing slash behouden blijft.
+        // Zonder dit strip Next.js de trailing slash, waardoor Django
+        // een 301 APPEND_SLASH redirect stuurt → oneindige loop.
         {
-          source: "/api/:path*",
-          destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/:path*`,
+          source: "/api/:path(.*)",
+          destination: `${backendUrl}/api/:path`,
         },
       ],
     };
